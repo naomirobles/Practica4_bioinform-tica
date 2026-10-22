@@ -1,120 +1,149 @@
-\section{Marco Teórico}
+\section{Marco teórico}
 
-\subsection{Optimización con restricciones}
-\label{sec:opt_restricciones}
+\subsection{El problema del plegamiento de proteínas}
+\label{sec:plegamiento}
 
-Un problema de optimización con restricciones busca el vector $\mathbf{x} = (x_1, \dots, x_n)$ que hace mínima una función objetivo $f(\mathbf{x})$ sin violar un conjunto de condiciones:
-\begin{equation}
-\begin{aligned}
-\min_{\mathbf{x}} \quad & f(\mathbf{x}) \\
-\text{sujeto a} \quad & g_j(\mathbf{x}) \le 0, \qquad j = 1, \dots, m, \\
-& l_k \le x_k \le u_k, \qquad k = 1, \dots, n.
-\end{aligned}
-\label{eq:problema_general}
-\end{equation}
-Las funciones $g_j$ son las restricciones de desigualdad y los valores $l_k$, $u_k$ son las cotas de cada variable. Al conjunto de puntos que cumplen todas las restricciones se le llama \textit{región factible}. Una solución que rompe al menos una restricción es \textit{infactible}, y no se puede reportar como respuesta aunque su valor de $f$ sea muy bajo.
+Una proteína se sintetiza como una cadena lineal de aminoácidos unidos por enlaces peptídicos. Cada aminoácido tiene una cadena lateral distinta, y algunas de estas cadenas laterales interactúan bien con el agua (son polares o tienen carga) mientras que otras la evitan (son hidrofóbicas). Al quedar en solución, la cadena se dobla sobre sí misma hasta alcanzar una forma tridimensional estable, llamada estado nativo, y es esa forma la que le permite cumplir su función biológica.
 
-Cuando $f$ y las $g_j$ son convexas, cualquier mínimo local es también el mínimo global, y los métodos basados en gradiente llegan a él desde cualquier punto de partida. Si alguna de estas funciones no es convexa, la región factible puede tener varias zonas separadas o la función objetivo puede tener varios ``valles''. En ese caso un método local termina en el mínimo más cercano al punto inicial, que puede ser peor que el global~\cite{floudas1999handbook}. Esta es la situación de los dos problemas de esta práctica, y es el motivo por el que se prueba una metaheurística poblacional, que explora varias regiones al mismo tiempo.
+Los experimentos de Anfinsen con la ribonucleasa mostraron que una proteína desnaturalizada recupera por sí sola su forma activa cuando se regresan las condiciones normales. De ahí surgió la llamada hipótesis termodinámica: la información necesaria para plegarse está contenida en la secuencia, y el estado nativo corresponde a la conformación de mínima energía libre~\cite{anfinsen1973principles}. Esta hipótesis convierte el plegamiento en un problema de optimización: dada una secuencia, encontrar la conformación que minimiza una función de energía.
+
+Entre las fuerzas que intervienen, la más importante para el plegamiento global es el efecto hidrofóbico~\cite{kauzmann1959some, dill1990dominant}. Los aminoácidos hidrofóbicos tienden a agruparse en el interior de la proteína, lejos del agua, y los polares quedan en la superficie. En muchas proteínas globulares este núcleo hidrofóbico es la característica estructural más clara.
+
+El problema es difícil incluso para la propia proteína si se piensa en términos de búsqueda. Levinthal hizo notar que si una cadena de unos cien aminoácidos probara sus conformaciones una por una, aun a gran velocidad, tardaría más que la edad del universo en encontrar la correcta, y sin embargo las proteínas reales se pliegan en milisegundos o segundos~\cite{levinthal1969fold}. Esto se conoce como la paradoja de Levinthal, y muestra que la cadena sigue un paisaje de energía que la guía hacia el estado nativo sin probar todas las conformaciones. Para un algoritmo, que no tiene esa guía física, el tamaño del espacio de conformaciones sí es el obstáculo principal.
+
+Hoy existen métodos de aprendizaje profundo, como AlphaFold, que predicen la estructura de muchas proteínas con una precisión cercana a la experimental~\cite{jumper2021alphafold}. Estos métodos aprenden de miles de estructuras conocidas y no resuelven el problema de optimización de forma explícita. Los modelos simplificados como el HP siguen siendo útiles para estudiar el problema de búsqueda en sí mismo y para comparar algoritmos de optimización en condiciones controladas.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Programación geométrica}
-\label{sec:gp}
+\subsection{El modelo HP}
+\label{sec:modelo_hp}
 
-La programación geométrica es una clase de problemas de optimización cuyas funciones tienen una forma particular~\cite{duffin1967geometric, boyd2007tutorial}. Un \textit{monomio} es una función de la forma
+El modelo hidrofóbico-polar fue propuesto por Dill~\cite{dill1985theory} y estudiado en detalle por Lau y Dill~\cite{lau1989lattice}. Conserva solo el efecto hidrofóbico y hace tres simplificaciones:
+
+\begin{enumerate}
+    \item Los 20 aminoácidos se reducen a dos clases: hidrofóbicos (H) y polares (P). Una proteína se describe entonces con una cadena $s = s_1 s_2 \cdots s_n$, con $s_i \in \{H, P\}$.
+    \item La cadena se coloca sobre una red regular. En esta práctica usamos la red cuadrada en dos dimensiones, así que cada aminoácido ocupa un punto de coordenadas enteras.
+    \item La energía solo cuenta los contactos entre aminoácidos H.
+\end{enumerate}
+
+Una conformación es una asignación de posiciones $\mathbf{p}_1, \dots, \mathbf{p}_n \in \mathbb{Z}^2$ que cumple dos condiciones. La primera es que aminoácidos consecutivos ocupen puntos vecinos de la red, $\lVert \mathbf{p}_{i+1} - \mathbf{p}_i \rVert = 1$. La segunda es que dos aminoácidos no ocupen el mismo punto, $\mathbf{p}_i \neq \mathbf{p}_j$ si $i \neq j$. A un recorrido con estas propiedades se le llama \textit{caminata autoevitante}.
+
+Dos aminoácidos $i$ y $j$ forman un \textit{contacto topológico} si están en puntos vecinos de la red pero no son consecutivos en la cadena ($|i - j| > 1$). La energía de una conformación $C$ es
 \begin{equation}
-m(\mathbf{x}) = c\, x_1^{a_1} x_2^{a_2} \cdots x_n^{a_n}, \qquad c > 0,\ x_k > 0,
+E(C) = \sum_{i < j - 1} \varepsilon(s_i, s_j)\, \Delta(i, j),
+\qquad
+\varepsilon(s_i, s_j) =
+\begin{cases}
+-1 & \text{si } s_i = s_j = H,\\
+\phantom{-}0 & \text{en otro caso,}
+\end{cases}
+\label{eq:energia_hp}
 \end{equation}
-donde los exponentes $a_k$ pueden ser cualquier número real, incluso negativos o fraccionarios. Una suma de monomios con coeficientes positivos se llama \textit{posinomio}. Un problema de programación geométrica minimiza un posinomio sujeto a restricciones del tipo ``posinomio $\le 1$''. Este tipo de expresiones aparece con frecuencia en ingeniería, porque muchas leyes físicas y de costos son productos de potencias de las variables de diseño.
+donde $\Delta(i,j) = 1$ si $\mathbf{p}_i$ y $\mathbf{p}_j$ son vecinos en la red y 0 si no lo son. En otras palabras, la energía es menos el número de contactos H-H. El problema consiste en encontrar la conformación $C^*$ que minimiza $E$, que en este modelo se toma como el estado nativo.
 
-La ventaja de esta forma es que, con el cambio de variable $x_k = e^{y_k}$, cada monomio se convierte en la exponencial de una función lineal de $\mathbf{y}$ y el problema completo se vuelve convexo. Así puede resolverse de manera exacta y eficiente~\cite{boyd2007tutorial}.
+Los pares consecutivos no se cuentan porque siempre están juntos, sin importar cómo se doble la cadena, y por lo tanto no distinguen una conformación de otra. Los contactos con aminoácidos P tampoco aportan energía. La Figura~\ref{fig:modelo_hp} muestra la misma cadena de ocho aminoácidos estirada y plegada: la cadena estirada no tiene contactos H-H, mientras que al doblarla la primera H queda junto a la última y la tercera junto a la sexta, con lo que la energía baja a $-2$.
 
-Cuando algún coeficiente $c$ es negativo, la suma ya no es un posinomio sino un \textit{signomio}, y el problema se llama de \textit{programación geométrica generalizada} o \textit{signomial}. El cambio de variable logarítmico ya no garantiza convexidad, porque un término negativo resta una función convexa, y el problema puede tener varios mínimos locales~\cite{floudas1999handbook}. Para estos problemas la literatura propone métodos de optimización global, como ramificación y acotamiento, que garantizan el óptimo pero tienen un costo que crece rápido con el número de variables. Las metaheurísticas no dan esa garantía, pero no necesitan derivadas ni una forma especial de las funciones, y por eso son una alternativa práctica.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figuras/hp_modelo_ejemplo.png}
+\caption{La secuencia HPHPPHPH en dos conformaciones. El círculo negro marca el primer aminoácido. (a) Estirada, sin contactos H-H. (b) Plegada en un rectángulo de $2 \times 4$, con dos contactos H-H (líneas punteadas).}
+\label{fig:modelo_hp}
+\end{figure}
 
-Un requisito de la programación geométrica que se conserva en la versión generalizada es que todas las variables deben ser estrictamente positivas, porque aparecen elevadas a exponentes negativos o fraccionarios. Por eso los dos problemas de esta práctica tienen cotas inferiores mayores que cero.
+En una red cuadrada, cada aminoácido interior de la cadena tiene cuatro vecinos en la red, y dos de ellos ya están ocupados por sus vecinos en la cadena. Por eso un aminoácido interior puede formar a lo más dos contactos, y uno de los extremos a lo más tres. Además, la red cuadrada es bipartita (se puede colorear como un tablero de ajedrez), y dos puntos vecinos siempre tienen colores distintos. Como los aminoácidos de posición par e impar alternan colores a lo largo de la cadena, solo pueden formar contacto un aminoácido en posición par con uno en posición impar. Estas restricciones limitan cuántos contactos puede tener una cadena, pero no dicen cómo conseguirlos.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Optimización por Enjambre de Partículas}
+\subsection{Por qué el problema es tan difícil}
+\label{sec:dificultad}
+
+\subsubsection{Tamaño del espacio de búsqueda}
+
+El número de conformaciones posibles de una cadena es el número de caminatas autoevitantes de $n-1$ pasos. Para la red cuadrada no se conoce una fórmula cerrada, pero se sabe que crece de forma exponencial,
+\begin{equation}
+c_m \sim A\, \mu^{m}\, m^{\gamma - 1},
+\label{eq:saw}
+\end{equation}
+donde $c_m$ es el número de caminatas de $m$ pasos, $\mu \approx 2.638$ es la constante de conectividad de la red cuadrada y $\gamma = 43/32$~\cite{jensen2004enumeration}. La constante $\mu$ es un poco menor que 3 porque, después del primer paso, cada nuevo paso tiene a lo más tres opciones (no puede regresar sobre el anterior), y algunas de ellas chocan con la propia cadena. Para una cadena de 100 aminoácidos, $\mu^{99} \approx 5 \times 10^{41}$, así que la búsqueda exhaustiva es imposible incluso para cadenas de tamaño moderado.
+
+\subsubsection{Complejidad computacional}
+
+El tamaño del espacio no basta para decir que un problema es difícil: hay problemas con espacios enormes que se resuelven de forma eficiente. En el caso del modelo HP, Crescenzi et al.~\cite{crescenzi1998complexity} demostraron que encontrar la conformación de mínima energía en la red cuadrada bidimensional es NP-completo, y Berger y Leighton~\cite{berger1998protein} demostraron lo mismo para la red cúbica en tres dimensiones. Esto significa que no se conoce un algoritmo que garantice encontrar el óptimo en tiempo polinomial, y que encontrarlo para cualquier cadena sería tan difícil como resolver cualquier otro problema de la clase NP. En la práctica se usan métodos exactos para cadenas cortas y metaheurísticas para las largas.
+
+\subsubsection{Forma del paisaje de energía}
+
+Además del tamaño, la forma de la función objetivo dificulta la búsqueda:
+
+\begin{itemize}
+    \item La energía solo toma valores enteros entre 0 y un mínimo pequeño (por ejemplo, $-9$ para una cadena de 20 aminoácidos). Millones de conformaciones distintas comparten la misma energía, así que el paisaje está formado por grandes mesetas. Dentro de una meseta, la energía no da ninguna pista sobre hacia dónde moverse.
+    \item Un cambio pequeño en la conformación, como cambiar la dirección de un solo paso, puede mover toda la parte final de la cadena y destruir muchos contactos a la vez. Dos conformaciones parecidas en su descripción pueden tener energías muy distintas.
+    \item Una fracción grande de las descripciones posibles produce cadenas que se cruzan consigo mismas y no son conformaciones válidas. Esta fracción aumenta con la longitud de la cadena (lo medimos en la Sección~\ref{sec:representacion}).
+    \item La conformación óptima casi nunca es única. Además de las rotaciones y reflexiones, que siempre dan ocho copias equivalentes de cada conformación en la red cuadrada, puede haber conformaciones realmente distintas con la misma energía mínima.
+\end{itemize}
+
+\subsubsection{Cadenas de referencia}
+
+Para comparar algoritmos se usa un conjunto de secuencias de prueba en dos dimensiones, de 20 a 100 aminoácidos, introducido por Unger y Moult~\cite{unger1993genetic} y usado después en muchos trabajos, entre ellos el algoritmo de colonia de hormigas de Shmygelska y Hoos~\cite{shmygelska2005ant}. Para cada secuencia se reporta la mejor energía conocida $E^*$. En las cadenas cortas esa energía se ha demostrado óptima; en las largas es el mejor valor encontrado hasta ahora por algún método. Los métodos que alcanzan esos valores en cadenas largas suelen combinar una búsqueda global con movimientos locales especializados, como los \textit{pull moves} de Lesh et al.~\cite{lesh2003complete}, que jalan un segmento de la cadena a una nueva posición sin romperla.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Representación de conformaciones}
+\label{sec:codificaciones}
+
+Para usar un algoritmo de búsqueda hay que describir cada conformación con una lista de símbolos o números. Como el primer aminoácido puede fijarse en el origen, basta con dar la dirección de cada paso. Krasnogor et al.~\cite{krasnogor1999protein} compararon las dos formas habituales de hacerlo:
+
+\begin{itemize}
+    \item \textit{Codificación absoluta}: cada paso es una dirección fija de la red (arriba, abajo, izquierda o derecha). Hay cuatro opciones por paso, y una de ellas siempre es inválida porque regresa sobre el aminoácido anterior.
+    \item \textit{Codificación relativa}: cada paso se describe respecto a la dirección del paso anterior (girar a la izquierda, seguir de frente o girar a la derecha). Hay tres opciones por paso y ninguna regresa sobre el paso anterior.
+\end{itemize}
+
+Con la codificación relativa el espacio de búsqueda pasa de $4^{n-1}$ a $3^{n-2}$ descripciones (el segundo aminoácido se fija también, porque rotar toda la cadena no cambia su energía). Las dos codificaciones también difieren en el efecto de un cambio: con la relativa, cambiar un paso gira todo el resto de la cadena alrededor de ese punto, mientras que con la absoluta lo traslada, y eso cambia qué conformaciones quedan ``cerca'' unas de otras para el algoritmo~\cite{krasnogor1999protein}. Ninguna de las dos codificaciones impide que la cadena choque consigo misma a más de un paso de distancia, así que cada algoritmo debe decidir qué hacer con esas descripciones inválidas: descartarlas, penalizarlas o repararlas.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimización por enjambre de partículas}
 \label{sec:pso}
 
-PSO fue propuesto por Kennedy y Eberhart en 1995 a partir de la simulación de un modelo social simplificado, inspirado en el movimiento de bandadas de aves y bancos de peces~\cite{kennedy1995pso, collet_stochastic_2007}. La población se llama enjambre y cada individuo, partícula. Cada partícula $i$ tiene una posición $X_i$, que representa una solución candidata, y una velocidad $V_i$. Además guarda la mejor posición que ha visitado, $P_i$ (o \textit{pbest}), y conoce la mejor posición encontrada por todo el enjambre, $G$ (o \textit{gbest}). En cada iteración la velocidad y la posición se actualizan con~\cite{shi1998modified, nasr_benchmarking_2020}:
+PSO fue propuesto por Kennedy y Eberhart en 1995, inspirado en el movimiento coordinado de bandadas de aves~\cite{kennedy1995pso}. Cada partícula $i$ tiene una posición $X_i$, que representa una solución, y una velocidad $V_i$. Guarda además la mejor posición que ha visitado, $P_i$ (\textit{pbest}), y conoce la mejor posición encontrada por todo el enjambre, $G$ (\textit{gbest}). En cada iteración se actualizan con~\cite{shi1998modified}:
 \begin{align}
 V_{id}(t+1) &= w\,V_{id}(t) + c_1 r_1 \left(P_{id} - X_{id}(t)\right) + c_2 r_2 \left(G_d - X_{id}(t)\right), \label{eq:velocidad}\\
 X_{id}(t+1) &= X_{id}(t) + V_{id}(t+1), \label{eq:posicion}
 \end{align}
-donde $d$ es la dimensión, $r_1$ y $r_2$ son números aleatorios uniformes en $[0,1]$, $w$ es el peso de inercia y $c_1$, $c_2$ son los coeficientes de aceleración cognitivo y social.
+donde $d$ es la dimensión y $r_1$, $r_2$ son números aleatorios uniformes en $[0,1]$. El peso de inercia $w$ controla cuánto conserva la partícula su movimiento anterior; un valor alto favorece la exploración de regiones nuevas y uno bajo la concentra cerca de las soluciones conocidas~\cite{shi1998parameter}. El coeficiente cognitivo $c_1$ atrae a cada partícula hacia su propio \textit{pbest}, y como cada partícula tiene uno distinto, mantiene la variedad del enjambre. El coeficiente social $c_2$ atrae a todas hacia el mismo \textit{gbest}, lo que acelera la convergencia y reduce la variedad~\cite{ratnaweera2004self}.
 
-Cada término de la Ecuación~\eqref{eq:velocidad} tiene un papel distinto. El término de inercia $w V_i$ conserva la dirección en la que se movía la partícula; un $w$ grande le permite recorrer distancias largas y explorar, y un $w$ pequeño la frena y concentra la búsqueda~\cite{shi1998parameter}. El término cognitivo atrae a cada partícula hacia su propio $P_i$, y como cada partícula tiene un $P_i$ distinto, mantiene la variedad del enjambre. El término social atrae a todas hacia el mismo punto $G$, lo que acelera la convergencia pero reduce la variedad~\cite{ratnaweera2004self}.
+\subsubsection{Coeficientes variables}
 
-A este balance se le conoce como el dilema entre exploración y explotación~\cite{crepinsek2013exploration}. Explorar significa visitar regiones nuevas del espacio de búsqueda; explotar significa refinar la búsqueda cerca de las mejores soluciones conocidas. Si el enjambre explota demasiado pronto converge a un mínimo local (convergencia prematura); si explora demasiado tiempo, no llega a refinar ninguna solución.
+Al inicio de la búsqueda conviene explorar y al final conviene refinar~\cite{crepinsek2013exploration}. Shi y Eberhart propusieron reducir $w$ de forma lineal de 0.9 a 0.4~\cite{shi1999empirical}, y Ratnaweera et al. aplicaron la misma idea a los coeficientes de aceleración, disminuyendo $c_1$ de 2.5 a 0.5 y aumentando $c_2$ de 0.5 a 2.5 (esquema TVAC)~\cite{ratnaweera2004self}. La variación no tiene que ser lineal: Chatterjee y Siarry~\cite{chatterjee2006nonlinear} propusieron una inercia que decrece de forma no lineal, y otros trabajos ajustan los coeficientes según el estado de la búsqueda~\cite{zhan2009adaptive, nickabadi2011novel}.
 
-\subsubsection{Coeficientes fijos}
-
-Clerc y Kennedy~\cite{clerc2002particle} estudiaron la estabilidad de la trayectoria de una partícula y propusieron un factor de constricción
+Una curva que se usa mucho para variar un parámetro de forma no lineal es el decaimiento coseno, popularizado en el entrenamiento de redes neuronales por Loshchilov y Hutter, quienes además lo combinan con reinicios periódicos~\cite{loshchilov2017sgdr}. Para un avance normalizado $s \in [0,1]$,
 \begin{equation}
-    \chi = \frac{2}{\left|\, 2 - \varphi - \sqrt{\varphi^2 - 4\varphi} \,\right|}, \qquad \varphi = c_1 + c_2 > 4.
-    \label{eq:constriccion}
+g(s) = \tfrac{1}{2}\left(1 + \cos(\pi s)\right)
+\label{eq:coseno}
 \end{equation}
-Con $\varphi = 4.1$ se obtiene $\chi \approx 0.7298$, lo que equivale a usar $w = 0.7298$ y $c_1 = c_2 = 0.7298 \cdot 2.05 \approx 1.49618$. Estos valores garantizan que las partículas no se alejen sin control y se han vuelto una configuración de referencia en la literatura~\cite{eberhart2000comparing, poli2007overview}.
+va de 1 a 0, cambiando despacio al principio y al final y rápido a la mitad.
 
-\subsubsection{Coeficientes variables en el tiempo}
-\label{sec:tvac}
+\subsubsection{Estabilidad}
 
-Al inicio de la búsqueda conviene explorar, porque el enjambre no sabe dónde está el óptimo; al final conviene explotar, porque ya encontró una región prometedora~\cite{shi1999empirical}. Unos coeficientes fijos representan un mismo compromiso durante toda la ejecución. Shi y Eberhart propusieron reducir $w$ linealmente de 0.9 a 0.4~\cite{shi1999empirical}, y Ratnaweera et al.~\cite{ratnaweera2004self} extendieron la idea a los coeficientes de aceleración (esquema TVAC):
-\begin{align}
-w(t)   &= w_{i} + (w_{f}-w_{i})\,\frac{t}{T-1}, \label{eq:tvac_w}\\
-c_1(t) &= c_{1i} + (c_{1f}-c_{1i})\,\frac{t}{T-1}, \label{eq:tvac_c1}\\
-c_2(t) &= c_{2i} + (c_{2f}-c_{2i})\,\frac{t}{T-1}, \label{eq:tvac_c2}
-\end{align}
-con $w: 0.9 \to 0.4$, $c_1: 2.5 \to 0.5$ y $c_2: 0.5 \to 2.5$, donde $t = 0, \dots, T-1$ es la iteración y $T$ el total de iteraciones. Al inicio domina el componente cognitivo y cada partícula explora por su cuenta; al final domina el social y el enjambre se concentra alrededor de $G$.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Manejo de restricciones en metaheurísticas}
-\label{sec:penalizacion}
-
-PSO, igual que la mayoría de las metaheurísticas, fue diseñado para problemas sin restricciones: compara soluciones solo por su valor de aptitud. Para resolver un problema como el de la Ecuación~\eqref{eq:problema_general} hay que decidir cómo comparar una solución factible con una infactible. Coello~\cite{coello2002theoretical} revisa las principales familias de técnicas:
-
-\begin{itemize}
-    \item \textit{Pena de muerte}: se descartan las soluciones infactibles. Es la opción más simple, pero cuando la región factible es pequeña casi todas las partículas iniciales se descartan y el algoritmo no tiene información para avanzar.
-    \item \textit{Funciones de penalización}: se suma a la función objetivo un término proporcional a qué tanto se violan las restricciones. Si el coeficiente de penalización es constante se habla de penalización estática; si cambia con las iteraciones, de penalización dinámica o adaptativa.
-    \item \textit{Reglas de factibilidad}: se compara primero por factibilidad y después por el valor de $f$, sin mezclar ambas cantidades en un solo número.
-    \item \textit{Reparación}: se transforma la solución infactible en una factible antes de evaluarla, lo que requiere conocer bien la estructura del problema.
-\end{itemize}
-
-La penalización estática tiene la forma
+No cualquier combinación de coeficientes produce un enjambre que converge. Poli~\cite{poli2009mean} analizó la media y la varianza de la posición de una partícula y obtuvo que su distribución se estabiliza si
 \begin{equation}
-F(\mathbf{x}) = f(\mathbf{x}) + R \sum_{j=1}^{m} \max\left(0,\, g_j(\mathbf{x})\right),
-\label{eq:penalizacion}
+c_1 + c_2 < \frac{24\,(1 - w^2)}{7 - 5w}.
+\label{eq:poli}
 \end{equation}
-donde $R > 0$ es el coeficiente de penalización. Si $\mathbf{x}$ es factible el término de penalización vale cero y $F = f$. Su principal dificultad es elegir $R$: si es muy pequeño, el algoritmo puede preferir una solución infactible con un objetivo bajo; si es muy grande, la superficie de búsqueda cerca de la frontera factible se vuelve muy abrupta~\cite{coello2002theoretical}. En problemas como los de esta práctica, donde el óptimo está justo sobre la frontera (algunas restricciones se cumplen con igualdad), esta elección es importante.
+Si la condición no se cumple, las partículas siguen oscilando con amplitud creciente (limitada en la práctica por la velocidad máxima), lo que equivale a una exploración amplia.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Diversidad del enjambre}
 \label{sec:diversidad}
 
-La diversidad mide qué tan dispersas están las partículas, y permite observar de forma numérica el paso de la exploración a la explotación~\cite{olorunda2008measuring}. Una medida común es la distancia promedio de cada vector al centroide del enjambre:
+La diversidad mide qué tan dispersas están las partículas y permite observar el paso de la exploración a la explotación~\cite{olorunda2008measuring}. Usamos la distancia promedio de cada vector al centroide:
 \begin{equation}
 D(\mathbf{v}_1, \dots, \mathbf{v}_N) = \frac{1}{N} \sum_{i=1}^{N} \left\lVert \mathbf{v}_i - \bar{\mathbf{v}} \right\rVert, \qquad \bar{\mathbf{v}} = \frac{1}{N}\sum_{i=1}^{N} \mathbf{v}_i,
 \label{eq:diversidad}
 \end{equation}
-donde $N$ es el número de partículas. Esta misma fórmula se aplica a tres conjuntos de vectores distintos:
-\begin{itemize}
-    \item \textit{Diversidad de posición}, sobre las posiciones actuales $X_i$. Indica qué tan repartido está el enjambre en el espacio de búsqueda.
-    \item \textit{Diversidad de velocidad}, sobre las velocidades $V_i$. Indica si las partículas todavía se mueven en direcciones y magnitudes diferentes; cuando tiende a cero, el enjambre ya no se desplaza.
-    \item \textit{Diversidad cognitiva}, sobre las mejores posiciones personales $P_i$. Indica qué tan distintos son los ``recuerdos'' de las partículas. Como $P_i$ solo cambia cuando la partícula encuentra algo mejor, esta medida cambia más despacio que la de posición.
-\end{itemize}
-Una caída rápida de la diversidad indica que el enjambre se concentró pronto en una región, lo que puede ser señal de convergencia prematura. Una diversidad que no baja indica que el enjambre sigue explorando y no ha refinado la solución.
+aplicada a tres conjuntos de vectores. La \textit{diversidad de posición} usa las posiciones actuales $X_i$ e indica qué tan repartido está el enjambre. La \textit{diversidad de velocidad} usa las velocidades $V_i$; cuando tiende a cero, las partículas se mueven igual o ya no se mueven. La \textit{diversidad cognitiva} usa las mejores posiciones personales $P_i$ e indica qué tan distintos son los ``recuerdos'' de las partículas; como $P_i$ solo cambia cuando la partícula mejora, esta medida cambia más despacio que las otras dos.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Prueba de rangos con signo de Wilcoxon}
-\label{sec:wilcoxon}
+\subsection{Prueba de Mann-Whitney}
+\label{sec:mannwhitney}
 
-PSO es estocástico, así que una sola ejecución no basta para decir que una versión es mejor que otra. Lo habitual es ejecutar cada versión varias veces y comparar las muestras con una prueba estadística~\cite{derrac2011practical}. Cuando las dos muestras están \textit{pareadas}, es decir, cuando la ejecución $k$ de una versión se puede emparejar con la ejecución $k$ de la otra (por ejemplo, porque comparten la misma población inicial), se usa la prueba de rangos con signo de Wilcoxon~\cite{wilcoxon1945individual}.
-
-La prueba no supone que los datos sigan una distribución normal, algo que en resultados de metaheurísticas rara vez se cumple~\cite{derrac2011practical}. El procedimiento es el siguiente:
-\begin{enumerate}
-    \item Se calcula la diferencia $d_k = a_k - b_k$ para cada pareja y se descartan las diferencias iguales a cero.
-    \item Se ordenan los valores absolutos $|d_k|$ de menor a mayor y se les asigna un rango ($1, 2, \dots, n$).
-    \item Se suman por separado los rangos de las diferencias positivas ($W^+$) y de las negativas ($W^-$).
-    \item El estadístico es $T = \min(W^+, W^-)$.
-\end{enumerate}
-La suma de todos los rangos es $n(n+1)/2$, que para $n = 30$ vale 465. Si no hay diferencia entre las versiones, se espera que $W^+$ y $W^-$ sean parecidas y que $T$ se acerque a 232.5. Mientras más pequeño sea $T$, más se inclinan las diferencias hacia un lado. La hipótesis nula $H_0$ es que la mediana de las diferencias es cero, y se rechaza cuando el valor $p$ es menor que el nivel de significancia $\alpha$, que en esta práctica es 0.05.
+Para decidir si un algoritmo es mejor que otro no basta una ejecución, porque PSO es estocástico. Se ejecuta cada versión varias veces y se comparan las muestras con una prueba no paramétrica, ya que los resultados de las metaheurísticas rara vez siguen una distribución normal~\cite{derrac2011practical}. La prueba de Mann-Whitney~\cite{mann1947test} compara dos muestras independientes: junta los valores de ambas, los ordena, les asigna rangos y calcula el estadístico
+\begin{equation}
+U = R_1 - \frac{n_1 (n_1 + 1)}{2},
+\end{equation}
+donde $R_1$ es la suma de los rangos de la primera muestra y $n_1$ su tamaño. Si las dos muestras vienen de la misma distribución, $U$ debe quedar cerca de $n_1 n_2 / 2$. En la versión unilateral que usamos, la hipótesis alternativa es que los valores de la primera muestra tienden a ser menores que los de la segunda, y la hipótesis nula se rechaza si el valor $p$ es menor que $\alpha = 0.05$. Como la energía del modelo HP solo toma valores enteros, hay muchos empates; la prueba los maneja asignando a los valores empatados el promedio de sus rangos.

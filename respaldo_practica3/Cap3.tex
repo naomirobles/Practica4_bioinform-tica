@@ -1,0 +1,193 @@
+\section{Desarrollo de la práctica}
+\label{sec:desarrollo}
+
+Los dos problemas se tomaron de la sección 7.2 del libro de Floudas et al.~\cite{floudas1999handbook}, que reúne problemas de programación geométrica generalizada publicados en la literatura junto con su mejor solución conocida. En esta sección describimos cada problema y después explicamos cómo lo pasamos a código y qué decisiones tomamos en el camino.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Problema 1: diseño de un intercambiador de calor}
+\label{sec:problema_hx}
+
+Este problema fue formulado por Avriel y Williams~\cite{avriel1971extension} y corresponde al problema de prueba 7.2.3 del libro. Una corriente fría entra a 100 grados y debe calentarse hasta 500 grados pasando por tres intercambiadores de calor conectados en serie. Cada intercambiador usa una corriente caliente distinta. Mientras más grande es el área de un intercambiador, más calor puede transferir, pero también cuesta más. El problema pide elegir el área de cada equipo de forma que el área total sea la mínima posible y que, aun así, la corriente fría llegue a su temperatura final.
+
+\subsubsection{Variables}
+
+\begin{itemize}
+    \item $x_1, x_2, x_3$: área de los intercambiadores 1, 2 y 3.
+    \item $x_4, x_5$: temperatura de la corriente fría a la salida del intercambiador 1 y del intercambiador 2.
+    \item $x_6, x_7, x_8$: temperatura de salida de la corriente caliente de cada intercambiador.
+\end{itemize}
+
+\subsubsection{Formulación}
+
+\begin{equation}
+\min \quad f(\mathbf{x}) = x_1 + x_2 + x_3
+\end{equation}
+sujeto a
+\begin{align}
+833.33252\,x_1^{-1} x_4 x_6^{-1} + 100\,x_6^{-1} - 83333.333\,x_1^{-1} x_6^{-1} &\le 1, \label{eq:hx1}\\
+1250\,x_2^{-1} x_5 x_7^{-1} + x_4 x_7^{-1} - 1250\,x_2^{-1} x_4 x_7^{-1} &\le 1, \label{eq:hx2}\\
+1250000\,x_3^{-1} x_8^{-1} + x_5 x_8^{-1} - 2500\,x_3^{-1} x_5 x_8^{-1} &\le 1, \label{eq:hx3}\\
+0.0025\,x_4 + 0.0025\,x_6 &\le 1, \label{eq:hx4}\\
+-0.0025\,x_4 + 0.0025\,x_5 + 0.0025\,x_7 &\le 1, \label{eq:hx5}\\
+0.01\,x_8 - 0.01\,x_5 &\le 1, \label{eq:hx6}
+\end{align}
+con las cotas
+\begin{equation}
+100 \le x_1 \le 10000, \qquad 1000 \le x_2, x_3 \le 10000, \qquad 10 \le x_4, \dots, x_8 \le 1000.
+\end{equation}
+
+\subsubsection{Interpretación}
+
+Las tres primeras restricciones son no lineales y se entienden mejor si se multiplican por su denominador. La Ecuación~\eqref{eq:hx1}, por ejemplo, queda como
+\begin{equation}
+x_1 (x_6 - 100) \ge 833.33\,(x_4 - 100).
+\end{equation}
+El lado derecho es el calor que la corriente fría necesita para subir de 100 grados a $x_4$; el lado izquierdo es el calor que el intercambiador 1 puede entregar, que crece con su área $x_1$ y con la diferencia de temperatura. En palabras, la restricción dice que cada intercambiador tiene que ser lo bastante grande para dar el calor que le toca. Las Ecuaciones~\eqref{eq:hx2} y~\eqref{eq:hx3} dicen lo mismo para el segundo intercambiador (de $x_4$ a $x_5$) y para el tercero (de $x_5$ a 500 grados).
+
+Las tres restricciones lineales, multiplicadas por 400 o por 100, quedan como $x_4 + x_6 \le 400$, $x_5 + x_7 - x_4 \le 400$ y $x_8 - x_5 \le 100$. Son condiciones de factibilidad térmica: el calor solo fluye de la corriente caliente a la fría, así que las temperaturas no pueden ordenarse de cualquier manera.
+
+Los términos con coeficiente negativo, y los productos entre áreas y temperaturas que aparecen al multiplicar, son los que vuelven al problema no convexo. El libro reporta tres desigualdades no convexas, tres lineales y un óptimo global $f^* = 7049.25$ en
+\[
+\mathbf{x}^* = (579.31,\ 1359.97,\ 5109.97,\ 182.01,\ 295.60,\ 217.98,\ 286.42,\ 395.60).
+\]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Problema 2: diseño óptimo de un reactor}
+\label{sec:problema_reactor}
+
+Este problema fue propuesto por Dembo~\cite{dembo1976set} y corresponde al problema de prueba 7.2.4 del libro. Trata sobre el diseño óptimo de un reactor químico, pero el libro no detalla el significado físico de cada variable, así que lo analizamos por su estructura matemática.
+
+\subsubsection{Formulación}
+
+\begin{equation}
+\min \quad f(\mathbf{x}) = 0.4\,x_1^{0.67} x_7^{-0.67} + 0.4\,x_2^{0.67} x_8^{-0.67} + 10 - x_1 - x_2
+\end{equation}
+sujeto a
+\begin{align}
+0.0588\,x_5 x_7 + 0.1\,x_1 &\le 1, \label{eq:re1}\\
+0.0588\,x_6 x_8 + 0.1\,x_1 + 0.1\,x_2 &\le 1, \label{eq:re2}\\
+4\,x_3 x_5^{-1} + 2\,x_3^{-0.71} x_5^{-1} + 0.0588\,x_3^{-1.3} x_7 &\le 1, \label{eq:re3}\\
+4\,x_4 x_6^{-1} + 2\,x_4^{-0.71} x_6^{-1} + 0.0588\,x_4^{-1.3} x_8 &\le 1, \label{eq:re4}
+\end{align}
+con $0.1 \le x_k \le 10$ para $k = 1, \dots, 8$.
+
+\subsubsection{Interpretación}
+
+Las cuatro restricciones solo tienen coeficientes positivos, así que por sí solas serían de programación geométrica clásica. La no convexidad viene de la función objetivo: los términos $-x_1 - x_2$ premian valores grandes de $x_1$ y $x_2$, mientras que los dos primeros términos y las restricciones~\eqref{eq:re1} y~\eqref{eq:re2} los castigan. El problema pide encontrar el punto de equilibrio entre ambas fuerzas.
+
+El problema tiene una estructura de dos ``ramas'' casi simétricas. La primera conecta $x_1$, $x_3$, $x_5$ y $x_7$; la segunda, $x_2$, $x_4$, $x_6$ y $x_8$. Las une la restricción~\eqref{eq:re2}, donde aparecen $x_1$ y $x_2$ al mismo tiempo. Los exponentes fraccionarios ($0.67$, $-0.71$, $-1.3$) hacen que no se pueda despejar ninguna variable de forma sencilla. El libro reporta cuatro desigualdades no convexas y un óptimo global $f^* = 3.9511$, sin dar las coordenadas del punto.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Del planteamiento a la implementación}
+\label{sec:implementacion}
+
+La implementación está en un cuaderno de Python (Google Colab) y usa solo NumPy, pandas, Matplotlib y SciPy. En esta sección explicamos las decisiones que tomamos para pasar cada problema del papel al código.
+
+\subsubsection{Representación de los problemas}
+
+Cada problema se guarda en un objeto con sus cotas, su función objetivo y una función que devuelve las restricciones. Como en el libro todas las restricciones tienen la forma ``expresión $\le 1$'', las pasamos a la forma $g_j(\mathbf{x}) \le 0$ de la Ecuación~\eqref{eq:problema_general} restando 1. Las funciones reciben una matriz con una fila por partícula, de modo que todo el enjambre se evalúa en una sola llamada sin ciclos de Python. El Código~\ref{cod:hx} muestra las restricciones del intercambiador.
+
+\begin{lstlisting}[caption={Restricciones del intercambiador de calor en la forma $g_j \le 0$.}, label={cod:hx}]
+def hx_cons(x):
+    x1, x2, x3, x4, x5, x6, x7, x8 = x.T
+    g = [
+        833.33252 * x4 / (x1 * x6) + 100.0 / x6 - 83333.333 / (x1 * x6) - 1,
+        1250.0 * x5 / (x2 * x7) + x4 / x7 - 1250.0 * x4 / (x2 * x7) - 1,
+        1250000.0 / (x3 * x8) + x5 / x8 - 2500.0 * x5 / (x3 * x8) - 1,
+        0.0025 * x4 + 0.0025 * x6 - 1,
+        -0.0025 * x4 + 0.0025 * x5 + 0.0025 * x7 - 1,
+        0.01 * x8 - 0.01 * x5 - 1,
+    ]
+    return np.column_stack(g)
+\end{lstlisting}
+
+Decidimos conservar las restricciones tal como aparecen en el libro y no en su forma multiplicada (área $\times$ temperatura). En la forma del libro cada restricción está escalada para compararse contra 1, así que una violación de 0.01 significa lo mismo en todas: que la expresión se pasó un 1\,\% de su límite. En la forma multiplicada las restricciones no lineales tienen magnitudes del orden de $10^5$ y las lineales del orden de $10^2$, y al sumarlas en la penalización las primeras dominarían por completo.
+
+Para comprobar que la codificación era correcta evaluamos la solución reportada por el libro. La función objetivo dio 7049.25, igual que el libro, y la violación total fue de $2.6 \times 10^{-5}$. Esa pequeña violación se debe a que el libro da las coordenadas redondeadas a dos decimales y el óptimo está justo sobre la frontera de las restricciones.
+
+\subsubsection{Normalización del espacio de búsqueda}
+
+En el intercambiador las áreas van de 100 a 10\,000 y las temperaturas de 10 a 1000. Si las partículas se movieran en estas unidades, una misma velocidad máxima sería enorme para unas variables y diminuta para otras, y las medidas de diversidad estarían dominadas por las áreas. Por eso las partículas viven en el hipercubo $[0,1]^8$ y se convierten al rango real solo al evaluar:
+\begin{equation}
+x_k = l_k + z_k\,(u_k - l_k), \qquad z_k \in [0, 1].
+\end{equation}
+Con esto todas las variables pesan lo mismo en el movimiento y en la diversidad, y el mismo código sirve para los dos problemas. En el reactor todas las cotas son iguales, así que la normalización no cambia nada importante, pero la mantuvimos para usar una sola implementación.
+
+\subsubsection{Método de penalización}
+
+Usamos la penalización estática de la Ecuación~\eqref{eq:penalizacion}, con $R = 10^6$ para el intercambiador y $R = 10^5$ para el reactor. Elegimos este método por tres razones.
+
+La primera es que la región factible es muy pequeña comparada con el espacio de búsqueda. En la primera iteración ninguna de las 50 partículas iniciales fue factible en ninguna de las 120 ejecuciones: el gbest más bajo en la iteración 1 fue de $1.5 \times 10^5$ en el intercambiador y $4.9 \times 10^4$ en el reactor, valores que solo pueden venir de la penalización. Con pena de muerte el enjambre no habría tenido ninguna referencia para empezar a moverse. Con penalización, en cambio, una partícula que viola poco tiene mejor aptitud que una que viola mucho, y el enjambre se dirige poco a poco hacia la región factible.
+
+La segunda es que la penalización estática es la más sencilla de implementar y de explicar, y no agrega parámetros que dependan de la iteración. Como el objetivo de la práctica es comparar dos esquemas de coeficientes de PSO, preferimos que el manejo de restricciones fuera el mismo y lo más simple posible en ambas versiones.
+
+La tercera es que usamos la suma de las violaciones y no su cuadrado. Con el cuadrado, una violación de 0.001 se convierte en $10^{-6}$ y prácticamente desaparece, lo que permite que el algoritmo termine en soluciones ligeramente infactibles. Con la suma lineal la penalización crece igual de rápido cerca de la frontera que lejos de ella.
+
+Los valores de $R$ los elegimos a mano con un criterio de magnitud: una violación de apenas 0.1\,\% en alguna restricción debe costar más que la diferencia entre una solución buena y una mediocre. En el intercambiador esa violación agrega $10^{-3} \times 10^6 = 1000$ unidades, que es más o menos la distancia entre el óptimo (7049) y una solución mala (8000). En el reactor agrega 100 unidades, muy por encima del rango de valores de la función objetivo cerca del óptimo (entre 3.9 y 4.4). No hicimos un ajuste fino de $R$; lo verificamos revisando que las 120 soluciones finales fueran factibles, y todas lo fueron. En el reactor la violación final fue exactamente cero, y en el intercambiador la mayor fue de $3.5 \times 10^{-9}$, que equivale a una penalización de 0.0035 unidades.
+
+\subsubsection{Manejo de las cotas y velocidad máxima}
+
+Cuando una partícula sale del hipercubo $[0,1]^8$, la regresamos al borde más cercano y ponemos en cero su velocidad en esa dimensión. Así la partícula no sigue empujando contra la pared en la siguiente iteración. Esta estrategia permite que una partícula se quede exactamente sobre una cota, lo cual es útil porque en estos problemas algunas soluciones tienen variables en sus límites.
+
+Además limitamos cada componente de la velocidad a $|V_{id}| \le V_{max} = 0.2$, es decir, al 20\,\% del rango de cada variable por iteración. Este límite evita que en las primeras iteraciones, cuando $w$ es alto, las partículas crucen el espacio completo de un solo salto y terminen pegadas a las cotas. Fijar $V_{max}$ como una fracción del rango es una práctica común en PSO~\cite{eberhart2000comparing}, y el valor de 0.2 lo elegimos como un punto intermedio que no es tan grande como para que las partículas salten de pared a pared ni tan pequeño como para que la exploración inicial sea lenta.
+
+\subsubsection{Algoritmo}
+
+Las dos versiones de PSO usan la misma función. La única diferencia es el diccionario de parámetros que recibe: en la versión fija el valor inicial y final de cada coeficiente es el mismo, y en la variable se interpolan con las Ecuaciones~\eqref{eq:tvac_w}--\eqref{eq:tvac_c2}. Así nos aseguramos de que cualquier diferencia en los resultados venga de los coeficientes y no de otra parte del código. El Código~\ref{cod:pso} muestra el ciclo principal.
+
+\begin{lstlisting}[caption={Ciclo principal de PSO (fragmento).}, label={cod:pso}]
+PARAMS_FIJOS     = {"w": (0.7298, 0.7298), "c1": (1.49618, 1.49618), "c2": (1.49618, 1.49618)}
+PARAMS_VARIABLES = {"w": (0.9, 0.4),       "c1": (2.5, 0.5),         "c2": (0.5, 2.5)}
+
+for t in range(n_iters):
+    w  = lineal(params["w"],  t, n_iters)
+    c1 = lineal(params["c1"], t, n_iters)
+    c2 = lineal(params["c2"], t, n_iters)
+
+    r1, r2 = rng.random((n_particles, d)), rng.random((n_particles, d))
+    v = w * v + c1 * r1 * (pbest - x) + c2 * r2 * (gbest - x)
+    v = np.clip(v, -vmax, vmax)
+    x = x + v
+
+    fuera = (x < 0) | (x > 1)
+    x = np.clip(x, 0, 1)
+    v[fuera] = 0.0
+
+    fit = problem.fitness(to_real(x))
+    mejor = fit < pbest_fit
+    pbest[mejor], pbest_fit[mejor] = x[mejor], fit[mejor]
+    g = np.argmin(pbest_fit)
+    if pbest_fit[g] < gbest_fit:
+        gbest, gbest_fit = pbest[g].copy(), pbest_fit[g]
+
+    hist["gbest"][t]   = gbest_fit
+    hist["div_pos"][t] = diversity(x)
+    hist["div_vel"][t] = diversity(v)
+    hist["div_cog"][t] = diversity(pbest)
+\end{lstlisting}
+
+Los coeficientes de la versión fija son los de Clerc y Kennedy~\cite{clerc2002particle}, y los de la versión variable son los recomendados por Shi y Eberhart~\cite{shi1999empirical} y Ratnaweera et al.~\cite{ratnaweera2004self}. Los resumimos en la Tabla~\ref{tab:coeficientes}. No los ajustamos para estos problemas porque son los valores de referencia de la literatura y son los mismos que usamos en la práctica anterior, lo que permite comparar el comportamiento de ambas versiones en un tipo de problema distinto.
+
+\begin{table}[H]
+\centering
+\caption{Coeficientes de las dos implementaciones de PSO.}
+\label{tab:coeficientes}
+\begin{tabular}{lccc}
+\toprule
+Implementación & $w$ & $c_1$ (cognitivo) & $c_2$ (social) \\
+\midrule
+PSO fijo & $0.7298$ & $1.49618$ & $1.49618$ \\
+PSO variable & $0.9 \to 0.4$ & $2.5 \to 0.5$ & $0.5 \to 2.5$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Diseño experimental}
+
+Usamos 50 partículas y 2000 iteraciones en todos los casos. El tamaño del enjambre está en el límite superior del rango habitual de 20 a 50 partículas~\cite{poli2007overview}; elegimos el límite superior porque, como ninguna partícula inicial es factible, un enjambre más grande tiene más probabilidad de que alguna caiga cerca de la región factible. Las 2000 iteraciones son el doble de las que usamos con Rastrigin. Los problemas tienen menos variables, pero las restricciones hacen la búsqueda más lenta, y en la versión variable la explotación fuerte solo empieza en la segunda mitad de la ejecución. Con 2000 iteraciones las curvas de las dos versiones ya están planas al final (Sección~\ref{sec:convergencia}).
+
+Cada versión se ejecutó 30 veces por problema, con las semillas 0 a 29. La versión fija y la variable usan las mismas semillas, así que la ejecución $k$ de ambas parte de la misma población inicial. Esto convierte los resultados en muestras pareadas y permite usar la prueba de Wilcoxon de la Sección~\ref{sec:wilcoxon}.
+
+En cada iteración guardamos el gbest y las tres medidas de diversidad de la Ecuación~\eqref{eq:diversidad}, calculadas en el espacio normalizado después de actualizar el enjambre. Con las 30 ejecuciones calculamos la media y la desviación estándar de cada medida en cada iteración. La prueba de Wilcoxon la aplicamos de forma bilateral sobre los valores de la última iteración, con $\alpha = 0.05$, usando la función \texttt{wilcoxon} de SciPy.
+
+Una solución final la consideramos factible si su violación total es menor que $10^{-6}$. El gbest que reportamos es el valor de la función penalizada, pero como todas las soluciones finales fueron factibles, coincide con el valor de la función objetivo original con una diferencia menor que 0.004.
