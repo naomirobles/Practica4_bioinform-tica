@@ -1,0 +1,24 @@
+\documentclass[12pt,twoside]{article}
+\input{preambulo} % paquetes, formato de página y estilo de código
+
+\begin{document}
+\sloppy
+\bibliographystyle{achemso} %citation style change as necessary
+
+\include{portada} %title file for the front page
+\tableofcontents %make table of contents (título "Índice general" provisto automáticamente por babel spanish)
+
+%\include{Thanks-abstact} % Abstract and Acknowledgements
+
+%edit these to suit you, add/remove as necessary. Use \include{filetitle} to add a .tex for each chapter
+\include{intro}
+\include{Cap2}
+\include{Cap3}
+\include{resultados}
+\include{ResultadosDinamicos}
+\include{Conclusiones}
+
+\bibliography{fuentes}
+
+%remember to either sync with Mendeley or Zotero or upload a .bib file exported from those cite using \cite{CitationTagXXXX} there will be a list it's ok
+\end{document}

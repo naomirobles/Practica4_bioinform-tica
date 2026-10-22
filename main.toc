@@ -1,0 +1,27 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {section}{\numberline {1}Introducción}{1}{section.1}%
+\contentsline {section}{\numberline {2}Marco Teórico}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Introducción a la Computación Evolutiva y Optimización por Enjambres}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Optimización por Enjambre de Partículas (PSO)}{2}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Formulación matemática del algoritmo}{3}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Parámetros del algoritmo}{4}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}El dilema exploración vs. explotación}{5}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}PSO con inercia dinámica}{6}{subsection.2.6}%
+\contentsline {section}{\numberline {3}Desarrollo de la práctica}{7}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Variante 1: PSO con parámetros fijos (clásico)}{7}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Interfaz común para las estrategias de $w$}{7}{subsubsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.2}Variante 2: PSO con inercia dinámica}{7}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Inercia lineal decreciente}{7}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Inercia basada en el fitness}{8}{subsubsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.3}Integración en el algoritmo}{9}{subsubsection.3.2.3}%
+\contentsline {section}{\numberline {4}Resultados}{11}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Error final por configuración}{11}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Distribución del error}{12}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Sensibilidad al valor de $w$ y escalabilidad}{12}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Resultados: coeficientes fijos frente a dinámicos}{14}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Mejor solución, media y desviación estándar}{14}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Convergencia}{15}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Pruebas estadísticas}{16}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Comparación con los resultados de la Sección~\ref {sec:resultados}}{16}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Conclusiones}{18}{section.6}%
+\contentsline {section}{\bbl@ensure@spanish {Bibliograf\'\i a}}{19}{section*.2}%

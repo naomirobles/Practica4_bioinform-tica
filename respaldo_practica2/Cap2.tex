@@ -1,0 +1,113 @@
+\section{Marco Teórico}
+
+\subsection{Introducción a la Computación Evolutiva y Optimización por Enjambres}
+
+La Computación Evolutiva agrupa un conjunto de técnicas metaheurísticas de optimización inspiradas en procesos naturales, dentro de las cuales se ubican los algoritmos bio-inspirados de inteligencia colectiva o \textit{swarm intelligence}. A diferencia de los algoritmos evolutivos clásicos (como los algoritmos genéticos), que basan su búsqueda en operadores de selección, cruza y mutación aplicados sobre una población de individuos, los algoritmos de enjambre prescinden de dichos operadores genéticos y en su lugar hacen evolucionar a la población mediante la cooperación y la competencia entre sus propios integrantes~\cite{pereira_particle_2011}.
+
+Esta familia de algoritmos toma como referencia el comportamiento colectivo observado en sistemas biológicos, como las bandadas de aves, los bancos de peces o las colonias de insectos, en los cuales ningún individuo posee información global del entorno, pero el intercambio de información local entre vecinos permite que el grupo en su conjunto localice recursos o soluciones de manera eficiente. El sociobiólogo E. O. Wilson planteó ya en 1975 que, en teoría, los miembros de un banco de peces pueden beneficiarse de los descubrimientos y la experiencia previa de todos los demás miembros durante la búsqueda de alimento, idea que sirvió de base conceptual para trasladar este principio de ``información compartida'' al ámbito de la optimización computacional~\cite{collet_stochastic_2007}.
+
+Dentro de la inteligencia de enjambres se distinguen principalmente dos vertientes: la Optimización por Colonia de Hormigas (\textit{Ant Colony Optimization}) y la Optimización por Enjambre de Partículas (\textit{Particle Swarm Optimization}, PSO), siendo esta última el algoritmo objeto de este trabajo. Ambas comparten el principio de que una población de agentes simples, que interactúan siguiendo reglas locales, puede dar lugar a un comportamiento colectivo capaz de resolver problemas de optimización complejos que serían difíciles de abordar mediante métodos puramente individuales.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimización por Enjambre de Partículas (PSO)}
+
+La Optimización por Enjambre de Partículas fue propuesta originalmente por James Kennedy y Russell Eberhart en 1995, como un método para la optimización de funciones no lineales continuas. El algoritmo surgió a partir de la simulación de un modelo social simplificado, por lo que, aunque su formulación conserva la metáfora social que le dio origen, el algoritmo puede sostenerse y aplicarse de manera independiente de dicha metáfora~\cite{kennedy_particle_nodate}.
+
+En su planteamiento inicial, Kennedy y Eberhart se apoyaron en los trabajos previos de Craig Reynolds sobre modelos de bandadas (\textit{flocking}) y observaron que, al simplificar dicho modelo eliminando las reglas relacionadas con la evasión de colisiones entre individuos, el comportamiento visual del grupo dejaba de asemejarse a una bandada y pasaba a comportarse como un enjambre; de ahí el nombre de \textit{Particle Swarm Optimization}~\cite{collet_stochastic_2007}.
+
+En PSO, la población recibe el nombre de enjambre (\textit{swarm}) y cada individuo se denomina partícula. Cada partícula representa una posible solución candidata dentro de un espacio de búsqueda de $n$ dimensiones y se desplaza por dicho espacio ajustando su trayectoria en función de dos fuentes de información: su propia experiencia (la mejor posición que ella misma ha encontrado hasta el momento) y la experiencia del enjambre en su conjunto (la mejor posición encontrada por cualquier partícula del grupo). Ninguna partícula desaparece durante la ejecución del algoritmo; en cambio, el enjambre completo converge progresivamente hacia regiones prometedoras del espacio de búsqueda mediante un mecanismo de intercambio de información entre sus miembros~\cite{patel_fuzzy_2011}.
+
+PSO se clasifica como un algoritmo metaheurístico, ya que realiza pocas o ninguna suposición sobre el problema que se está optimizando, lo que le permite explorar espacios de soluciones candidatas de gran tamaño y dimensionalidad. Entre sus principales ventajas se encuentran la sencillez conceptual de su implementación ---que puede programarse en pocas líneas de código---, el bajo costo computacional en términos de memoria y velocidad, y el requerir únicamente operadores matemáticos primitivos~\cite{kennedy_particle_nodate}.
+
+A partir de su formulación original, el algoritmo ha dado lugar a numerosas variantes orientadas a mejorar su desempeño y a resolver problemas de convergencia identificados en versiones posteriores de estudio, entre las que destaca la incorporación del peso de inercia (\textit{inertia weight}) propuesto por Shi y Eberhart, así como el factor de constricción introducido por Clerc y Kennedy en 2002, ambos orientados a equilibrar la exploración y la explotación del espacio de búsqueda a lo largo de las iteraciones~\cite{freitas_particle_2020}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Formulación matemática del algoritmo}
+
+En PSO, cada partícula $i$ del enjambre se representa mediante un vector de posición $X_i$ y un vector de velocidad $V_i$ dentro de un espacio de búsqueda de $n$ dimensiones. En cada iteración, la posición de la partícula se actualiza sumando su velocidad actual a su posición actual~\cite{nasr_benchmarking_2020}:
+\begin{equation}
+\vec{X}_{id}(t+1) = \vec{X}_{id}(t) + \vec{V}_{id}(t+1)
+\end{equation}
+donde el subíndice $d$ denota la dimensión considerada. La velocidad, a su vez, se actualiza de acuerdo con la siguiente expresión:
+\begin{equation}
+\vec{V}_{id}(t+1) = w\,\vec{V}_{id}(t) + c_1 r_1 \left(P_{id} - \vec{X}_{id}(t)\right) + c_2 r_2 \left(G_d - \vec{X}_{id}(t)\right)
+\end{equation}
+Los elementos de esta ecuación tienen el siguiente significado:
+\begin{itemize}
+    \item \textbf{$w$:} peso de inercia (\textit{inertia weight}), parámetro incorporado posteriormente a la formulación original por Shi y Eberhart para controlar la influencia de la velocidad previa de la partícula sobre su velocidad actual, regulando así el balance entre exploración y explotación del espacio de búsqueda.
+    \item \textbf{$P_{id}$:} mejor posición histórica encontrada por la propia partícula $i$ en la dimensión $d$ (componente cognitivo o de ``nostalgia simple'', en términos de los autores originales).
+    \item \textbf{$G_d$:} mejor posición encontrada por cualquier partícula del enjambre completo en la dimensión $d$ (componente social).
+    \item \textbf{$c_1$, $c_2$:} coeficientes de aceleración cognitivo y social, respectivamente, que ponderan la atracción de la partícula hacia su propio mejor histórico y hacia el mejor global del enjambre. Kennedy y Eberhart asignaron originalmente un valor de 2 a ambos coeficientes, de modo que el producto con un número aleatorio de media 0.5 diera, en promedio, un peso de 1, otorgando a la partícula probabilidades equivalentes de sobrepasar o quedarse corta respecto de su objetivo.
+    \item \textbf{$r_1$, $r_2$:} números aleatorios distribuidos uniformemente en el intervalo $[0, 1]$, que introducen un componente estocástico en la búsqueda e impiden que todas las partículas converjan exactamente por la misma trayectoria.
+\end{itemize}
+
+Respecto al equilibrio entre los componentes cognitivo y social, los estudios experimentales de los autores originales mostraron que un valor de $c_1$ considerablemente mayor que $c_2$ provoca que las partículas exploren de forma errática y aislada el espacio de búsqueda, mientras que la situación inversa ---un $c_2$ mucho mayor que $c_1$--- conduce a una convergencia prematura hacia óptimos locales; los mejores resultados se obtienen generalmente cuando ambos coeficientes toman valores aproximadamente iguales~\cite{collet_stochastic_2007}.
+
+El algoritmo se ejecuta de manera iterativa: en cada ciclo se evalúa la función objetivo (o función de aptitud) para la posición actual de cada partícula, se actualizan $P_{id}$ y $G_d$ cuando corresponde, y se recalculan velocidad y posición según las ecuaciones anteriores, repitiendo el proceso hasta alcanzar un criterio de paro, ya sea un número máximo de iteraciones o un umbral de convergencia sobre la calidad de la solución encontrada.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Parámetros del algoritmo}
+\label{sec:parametros}
+
+El desempeño de PSO depende en gran medida de la elección de sus parámetros de control. A diferencia de otros métodos de optimización, el algoritmo tiene pocos parámetros, pero pequeños cambios en su valor pueden hacer que el enjambre converja rápidamente, se estanque en un óptimo local o incluso diverja~\cite{poli2007overview, shi1998parameter}.
+
+\begin{itemize}
+    \item \textbf{Tamaño del enjambre ($N$):} número de partículas que exploran el espacio de búsqueda. Un enjambre grande cubre más regiones del espacio en cada iteración, pero aumenta el número de evaluaciones de la función objetivo. En la práctica se usan típicamente entre 20 y 50 partículas, y el algoritmo es poco sensible a este valor dentro de ese rango~\cite{poli2007overview, shi1999empirical}.
+
+    \item \textbf{Número de iteraciones ($T$):} determina el presupuesto de cómputo y funciona como criterio de paro. En las estrategias de inercia dinámica también define la velocidad con que cambian los coeficientes, ya que estos se expresan en función de la razón $t/T$.
+
+    \item \textbf{Peso de inercia ($w$):} escala la velocidad de la iteración anterior. Shi y Eberhart~\cite{shi1998modified} lo introdujeron para controlar el alcance de la búsqueda y encontraron que los valores entre 0.9 y 1.2 daban buenos resultados con $c_1 = c_2 = 2$. Si $w > 1$ la velocidad tiende a crecer en cada iteración y el enjambre puede divergir, mientras que un valor cercano a cero elimina la memoria del movimiento y la partícula depende solo de las atracciones hacia $P_i$ y $G$~\cite{shi1998parameter}.
+
+    \item \textbf{Coeficientes de aceleración ($c_1$, $c_2$):} ponderan la atracción cognitiva y social. Su valor clásico es $c_1 = c_2 = 2$~\cite{kennedy1995pso}, aunque se ha demostrado que su efecto no puede analizarse por separado del de $w$, porque los tres coeficientes determinan juntos si la trayectoria de la partícula converge u oscila~\cite{clerc2002particle}.
+
+    \item \textbf{Velocidad máxima ($V_{max}$):} límite que se aplica a cada componente de la velocidad para evitar que las partículas salgan del espacio de búsqueda. En la versión original era el único mecanismo para controlar la explosión de las velocidades. Con la incorporación de $w$ su papel se volvió secundario, y suele fijarse como una fracción del rango de cada variable~\cite{eberhart2000comparing}.
+\end{itemize}
+
+Clerc y Kennedy~\cite{clerc2002particle} analizaron la estabilidad de la trayectoria de una partícula y propusieron el factor de constricción $\chi$, que multiplica toda la ecuación de velocidad:
+\begin{equation}
+    \chi = \frac{2}{\left|\, 2 - \varphi - \sqrt{\varphi^2 - 4\varphi} \,\right|}, \qquad \varphi = c_1 + c_2 > 4.
+    \label{eq:constriccion}
+\end{equation}
+Con el valor habitual $\varphi = 4.1$ se obtiene $\chi \approx 0.7298$. Esta formulación es algebraicamente equivalente a usar un peso de inercia $w = 0.7298$ y coeficientes $c_1 = c_2 = 0.7298 \cdot 2.05 \approx 1.49618$. Por esta razón estos valores se han vuelto una configuración de referencia en la literatura~\cite{eberhart2000comparing, poli2007overview}, y son los que se usan en la implementación con coeficientes fijos de esta práctica.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{El dilema exploración vs. explotación}
+\label{sec:exploracion}
+
+Todo algoritmo de búsqueda metaheurística debe equilibrar dos objetivos opuestos. La \textit{exploración} consiste en visitar regiones nuevas del espacio de búsqueda para no pasar por alto zonas prometedoras. La \textit{explotación} consiste en refinar la búsqueda alrededor de las mejores soluciones encontradas para mejorar su precisión~\cite{crepinsek2013exploration}. Un algoritmo que explora demasiado se comporta como una búsqueda aleatoria y tarda en converger. Uno que explota demasiado converge rápido, pero puede quedar atrapado en el primer óptimo local que encuentre, un fenómeno conocido como convergencia prematura~\cite{crepinsek2013exploration, zhan2009adaptive}.
+
+En PSO, cada término de la ecuación de velocidad contribuye de forma distinta a este equilibrio:
+\begin{itemize}
+    \item El término de inercia $w\,V_i$ mantiene la dirección de movimiento de la partícula. Un valor grande de $w$ le permite recorrer distancias largas y favorece la exploración global, mientras que un valor pequeño concentra la búsqueda en una región local~\cite{shi1998modified, shi1998parameter}.
+    \item El componente cognitivo $c_1 r_1 (P_i - X_i)$ atrae a cada partícula hacia su propia mejor posición. Como cada partícula tiene un $P_i$ distinto, este término mantiene la diversidad del enjambre y favorece la exploración~\cite{ratnaweera2004self}.
+    \item El componente social $c_2 r_2 (G - X_i)$ atrae a todas las partículas hacia el mismo punto. Este término acelera la convergencia y favorece la explotación, pero también reduce la diversidad del enjambre~\cite{ratnaweera2004self}.
+\end{itemize}
+
+El equilibrio adecuado no es el mismo durante toda la ejecución. Al inicio conviene explorar, porque el enjambre todavía no tiene información sobre la ubicación del óptimo. Al final conviene explotar, porque el enjambre ya identificó una región prometedora y lo que importa es refinar la solución~\cite{shi1999empirical, zhan2009adaptive}. Esto es especialmente importante en funciones multimodales como Rastrigin, cuya gran cantidad de óptimos locales castiga tanto la convergencia prematura como la falta de convergencia. Un conjunto de coeficientes fijos representa un único compromiso entre ambos objetivos para toda la ejecución, lo que motiva el uso de coeficientes que cambian con el tiempo.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PSO con inercia dinámica}
+\label{sec:inercia_dinamica}
+
+En la variante con inercia dinámica, $w$ deja de ser constante y se ajusta durante la ejecución para pasar de un comportamiento exploratorio a uno explotador. Bansal et al.~\cite{bansal2011inertia} compararon quince estrategias propuestas en la literatura, que pueden agruparse en tres familias:
+
+\begin{itemize}
+    \item \textbf{Estrategias dependientes del tiempo.} $w$ cambia en función de la iteración, sin usar información del enjambre. La más conocida es la inercia lineal decreciente (LDIW, por sus siglas en inglés) de Shi y Eberhart~\cite{shi1999empirical}:
+    \begin{equation}
+        w(t) = w_{max} - (w_{max} - w_{min})\,\frac{t}{T},
+        \label{eq:ldiw}
+    \end{equation}
+    con los valores recomendados $w_{max} = 0.9$ y $w_{min} = 0.4$. Existen también versiones no lineales, en las que $w$ decrece siguiendo una potencia de $t/T$~\cite{chatterjee2006nonlinear}.
+
+    \item \textbf{Estrategias aleatorias.} $w$ se muestrea en cada iteración, por ejemplo $w = 0.5 + \mathrm{rand}()/2$, lo que produce un valor medio de 0.75. Eberhart y Shi~\cite{eberhart2001tracking} la propusieron para problemas cuyo óptimo cambia con el tiempo, donde no tiene sentido reducir $w$ de forma monótona.
+
+    \item \textbf{Estrategias adaptativas.} $w$ se calcula a partir del estado del enjambre, por ejemplo la calidad de la solución de cada partícula, la tasa de partículas que mejoraron su mejor posición o la dispersión del enjambre~\cite{nickabadi2011novel, zhan2009adaptive}. A diferencia de las anteriores, estas estrategias pueden asignar un valor de $w$ distinto a cada partícula. La estrategia basada en fitness de esta práctica pertenece a esta familia.
+\end{itemize}
+
+La misma idea puede extenderse a los coeficientes de aceleración. Ratnaweera et al.~\cite{ratnaweera2004self} propusieron los coeficientes de aceleración variables en el tiempo (TVAC), en los que $c_1$ disminuye y $c_2$ aumenta linealmente durante la ejecución:
+\begin{equation}
+    c_1(t) = c_{1i} + (c_{1f} - c_{1i})\,\frac{t}{T}, \qquad
+    c_2(t) = c_{2i} + (c_{2f} - c_{2i})\,\frac{t}{T}.
+    \label{eq:tvac}
+\end{equation}
+Con $c_{1i} = 2.5$, $c_{1f} = 0.5$, $c_{2i} = 0.5$ y $c_{2f} = 2.5$, al inicio domina el componente cognitivo y las partículas se mueven de forma independiente. Al final domina el componente social y el enjambre se concentra alrededor del mejor global. Combinado con la inercia de la ecuación~\eqref{eq:ldiw}, este esquema obtuvo mejores resultados que el PSO con inercia lineal y coeficientes fijos en la mayoría de las funciones de prueba evaluadas por sus autores~\cite{ratnaweera2004self}.

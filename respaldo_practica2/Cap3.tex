@@ -1,0 +1,116 @@
+\section{Desarrollo de la práctica}
+\subsection{Variante 1: PSO con parámetros fijos (clásico)}
+En la variante clásica el coeficiente de inercia $w$ tiene el mismo valor durante toda la ejecución. Este coeficiente determina qué tanto conserva cada partícula su velocidad anterior en la actualización
+\begin{equation}
+v_i^{t+1} = w\,v_i^{t} + c_1 r_1 \left(p_i - x_i^{t}\right) + c_2 r_2 \left(g - x_i^{t}\right),
+\label{eq:velocidad}
+\end{equation}
+donde $p_i$ es la mejor posición encontrada por la partícula $i$ y $g$ es la mejor posición del enjambre. Un $w$ alto favorece la exploración porque las partículas recorren distancias grandes sin cambiar mucho de dirección. Un $w$ bajo favorece la explotación porque el movimiento depende casi por completo de las atracciones hacia $p_i$ y $g$.
+
+\subsubsection{Interfaz común para las estrategias de \texorpdfstring{$w$}{w}}
+
+Para comparar las estrategias sin duplicar el algoritmo, cada una se implementó como una función que recibe la iteración actual \texttt{t}, el número total de iteraciones \texttt{T}, el vector con el fitness de las partículas y el generador de números aleatorios \texttt{rng}. La función devuelve un escalar cuando todas las partículas comparten el mismo $w$, o un vector con un valor por partícula. Cada estrategia se construye con una función externa que fija sus parámetros y devuelve la función interna \texttt{w}. Con esta forma, el $w$ constante de la variante 1 también se puede expresar como una estrategia:
+
+\begin{lstlisting}[emph={w_constante, w}, caption={Estrategia de $w$ constante (variante 1)}]
+def w_constante(valor):
+    # Enfoque 1: w fijo durante todas las iteraciones.
+    def w(t, T, fitness, rng):
+        return valor
+    return w
+\end{lstlisting}
+
+\subsection{Variante 2: PSO con inercia dinámica}
+\label{subsec:inercia_dinamica}
+
+ En la inercia dinámica, $w$ cambia durante la ejecución para ajustar ese equilibrio. En esta práctica se implementaron dos estrategias: una que reduce $w$ linealmente con las iteraciones y otra que asigna a cada partícula un $w$ calculado a partir de su fitness.
+
+
+
+\subsubsection{Inercia lineal decreciente}
+
+La primera estrategia empieza con un valor alto de $w$ y lo reduce en cada iteración hasta un valor mínimo:
+\begin{equation}
+w(t) = w_{max} - \frac{(w_{max} - w_{min})\,t}{T},
+\label{eq:w_lineal}
+\end{equation}
+donde $t$ es la iteración actual y $T$ el número total de iteraciones. Se usaron $w_{max} = 0.9$ y $w_{min} = 0.4$, los mismos valores del cuaderno original. Al inicio las partículas se mueven con mucha inercia y exploran el espacio de búsqueda; conforme avanza la ejecución, la inercia disminuye y el enjambre se concentra alrededor de las mejores soluciones encontradas. Como el ciclo recorre $t = 0, 1, \dots, T-1$, el último valor aplicado es $0.9 - 0.5 \cdot 999/1000 \approx 0.4005$.
+
+\begin{lstlisting}[emph={w_lineal, w}, caption={Estrategia de $w$ lineal decreciente}]
+def w_lineal(wmax, wmin):
+    # Enfoque 2: w = wmax - (wmax - wmin) * t / T
+    def w(t, T, fitness, rng):
+        return wmax - (wmax - wmin) * t / T
+    return w
+\end{lstlisting}
+
+En esta estrategia $w$ depende solo del número de iteración, por lo que todas las partículas usan el mismo valor en una misma iteración y la función devuelve un escalar.
+
+\subsubsection{Inercia basada en el fitness}
+
+La segunda estrategia calcula un $w$ distinto para cada partícula en cada iteración:
+\begin{equation}
+w_i = \frac{1.1 \cdot \text{rand}()}{f(x_i)},
+\label{eq:w_fitness}
+\end{equation}
+donde $f(x_i)$ es el fitness de la posición actual de la partícula $i$ y $\text{rand}()$ es un número aleatorio uniforme en $[0, 1)$ generado de forma independiente para cada partícula. Como el problema es de minimización, una partícula con menor $f(x_i)$ recibe en promedio un $w$ más grande y conserva más de su velocidad, mientras que las partículas con mal fitness pierden inercia y quedan dominadas por la atracción hacia $p_i$ y $g$. El factor aleatorio evita que dos partículas con el mismo fitness reciban siempre el mismo valor.
+
+\begin{lstlisting}[emph={w_fitness, w}, caption={Función de peso por partícula}]
+def w_fitness(usar_error=False, f_optimo=F_OPTIMO, epsilon=1e-12):
+    # Enfoque 3: w_i = 1.1 * rand() / f(x_i), un valor por partícula
+    def w(t, T, fitness, rng):
+        f = fitness - f_optimo if usar_error else fitness
+        return 1.1 * rng.random(fitness.shape) / np.maximum(f, epsilon)
+    return w
+\end{lstlisting}
+
+El resultado de la ecuación~\eqref{eq:w_fitness} depende de la escala de la función objetivo. La función F5 del CEC 2017 incluye un desplazamiento de 500 en su valor, así que $f(x_i) \geq 500$ en todo el dominio y $w_i$ nunca supera $1.1/500 = 0.0022$. Para estudiar este efecto se implementaron dos versiones controladas por el parámetro \texttt{usar\_error}:
+
+\begin{itemize}
+\item Con \texttt{usar\_error=False} se aplica la ecuación tal como está definida, usando el valor de $f(x_i)$ que devuelve el benchmark.
+\item Con \texttt{usar\_error=True} el denominador es el error $f(x_i) - f^*$, con $f^* = 500$. De esta forma se elimina el desplazamiento de la función y $w_i$ puede tomar valores mayores. Cuando una partícula se acerca al óptimo el error tiende a cero y $w_i$ crece sin límite, por lo que el denominador se acota inferiormente con \texttt{epsilon} para evitar una división entre cero.
+\end{itemize}
+
+\subsubsection{Integración en el algoritmo}
+
+La función \texttt{ejecutar\_pso} del cuaderno original calculaba $w$ con la ecuación~\eqref{eq:w_lineal} dentro del ciclo. En la nueva versión recibe la estrategia como parámetro \texttt{estrategia\_w} y la invoca en cada iteración con el fitness de las posiciones actuales. El fragmento siguiente muestra la parte del ciclo que cambió:
+
+\begin{lstlisting}[emph={estrategia_w, w}, caption={Cálculo de $w$ y actualización de velocidad dentro de \texttt{ejecutar\_pso}}]
+for it in range(num_iterations):
+    r1 = rng.uniform(0, 1, size=(size, dimension))
+    r2 = rng.uniform(0, 1, size=(size, dimension))
+
+    w = np.asarray(estrategia_w(it, num_iterations, fitness, rng), dtype=float)
+    historial_w[it] = w.mean()
+    if w.ndim == 1:              # un w por particula
+        w = w[:, None]
+
+    velocity = (w * velocity +
+                c1 * r1 * (personal_best_positions - position) +
+                c2 * r2 * (global_best_position - position))
+
+    if limitar:
+        velocity = np.clip(velocity, -vmax, vmax)
+        position = np.clip(position + velocity, low, high)
+    else:
+        position = position + velocity
+\end{lstlisting}
+
+El resultado de la estrategia se convierte a un arreglo de NumPy. Si es un escalar (estrategias constante y lineal), se multiplica directamente por la matriz de velocidades de tamaño $N \times D$. Si es un vector de $N$ elementos (estrategia basada en fitness), se reordena como una columna de tamaño $N \times 1$ con \texttt{w[:, None]}, de modo que el \emph{broadcasting} de NumPy multiplique toda la fila de velocidades de la partícula $i$ por su propio $w_i$. En cada iteración también se guarda el promedio de $w$ en \texttt{historial\_w} para graficar su evolución.
+
+Además, se agregó un límite a la velocidad, $v_{max} = 0.2\,(x_{max} - x_{min}) = 40$, y las posiciones se recortan al espacio de búsqueda $[-100, 100]^D$. Con $c_1 = c_2 = 1.5$, las configuraciones con $w$ pequeño, como la basada en fitness, producen oscilaciones cada vez más amplias y las partículas salen del dominio. El límite se puede desactivar con \texttt{limitar=False}.
+
+Por último, todas las configuraciones evaluadas se reúnen en un diccionario que asocia cada nombre con su enfoque y su estrategia. El experimento recorre este diccionario para cada dimensión y ejecuta 30 corridas por configuración:
+
+\begin{lstlisting}[emph={w_constante, w_lineal, w_fitness}, caption={Configuraciones de $w$ evaluadas}]
+CONFIGURACIONES = {
+    "Constante w=0.4":    ("Constante", w_constante(0.4)),
+    "Constante w=0.6":    ("Constante", w_constante(0.6)),
+    "Constante w=0.7298": ("Constante", w_constante(0.7298)),
+    "Constante w=0.9":    ("Constante", w_constante(0.9)),
+    "Lineal 0.9->0.4":    ("Lineal decreciente", w_lineal(0.9, 0.4)),
+    "Fitness 1.1r/f(x)":  ("Basado en fitness", w_fitness(usar_error=False)),
+    "Fitness 1.1r/error": ("Basado en fitness", w_fitness(usar_error=True)),
+}
+\end{lstlisting}
+
+La ejecución $k$ de cada configuración usa la semilla $2017 + 1000\,D + k$, la misma para todas las estrategias de $w$. Así, en una misma dimensión, todas las configuraciones parten de la misma población inicial y las diferencias en el desempeño se pueden atribuir a la estrategia de inercia. El desempeño de cada estrategia se analiza en la Sección~\ref{sec:resultados}.

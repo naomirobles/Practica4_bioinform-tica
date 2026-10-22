@@ -1,0 +1,88 @@
+% =====================================================================
+% CAMBIOS PARA INTEGRAR "Resultados_Dinamicos.tex" AL REPORTE PRINCIPAL
+% Copia cada bloque en el lugar indicado de tu .tex principal.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% 1) PREÁMBULO: verifica que estén estos paquetes (la sección nueva los usa)
+% ---------------------------------------------------------------------
+\usepackage{float}      % [H] en tablas y figuras
+\usepackage{booktabs}   % \toprule, \midrule, \bottomrule
+\usepackage{multirow}   % \multirow en la tabla de resultados
+\usepackage{amsmath}    % entorno align
+\usepackage{graphicx}   % \includegraphics
+
+
+% ---------------------------------------------------------------------
+% 2) SECCIÓN "Resultados" ACTUAL: agrega esta etiqueta justo después de
+%    \section{Resultados} (la sección nueva la referencia)
+% ---------------------------------------------------------------------
+\section{Resultados}
+\label{sec:resultados}
+
+
+% ---------------------------------------------------------------------
+% 3) DÓNDE INCLUIR LA SECCIÓN NUEVA: después de la sección Resultados y
+%    antes de Conclusiones. Resultados_Dinamicos.tex debe estar en la
+%    misma carpeta que el .tex principal.
+% ---------------------------------------------------------------------
+\input{Resultados_Dinamicos}
+
+
+% ---------------------------------------------------------------------
+% 4) INTRODUCCIÓN: reemplaza el último párrafo por este
+% ---------------------------------------------------------------------
+En esta práctica se implementa primero la versión clásica de PSO, con parámetros fijos, y después se extiende en dos pasos. Primero se hace variable únicamente el peso de inercia $w$, con una estrategia lineal decreciente y otra basada en el fitness de cada partícula. Después se hacen variables los tres coeficientes $w$, $c_1$ y $c_2$, siguiendo el esquema de coeficientes de aceleración variables en el tiempo (TVAC). El objetivo es comparar estos enfoques y analizar el efecto que tiene cada modificación sobre el comportamiento del enjambre y la calidad de las soluciones obtenidas.
+
+
+% ---------------------------------------------------------------------
+% 5) DESARROLLO: nueva subsección al final de "Desarrollo de la práctica"
+%    (después de 3.2.3 Integración en el algoritmo)
+% ---------------------------------------------------------------------
+\subsection{Variante 3: PSO con coeficientes dinámicos (TVAC)}
+\label{sec:variante_tvac}
+
+En la tercera variante, además de $w$, también cambian los coeficientes de aceleración $c_1$ y $c_2$. Los tres varían linealmente con la iteración: $w$ baja de 0.9 a 0.4, $c_1$ baja de 2.5 a 0.5 y $c_2$ sube de 0.5 a 2.5. Al inicio domina el componente cognitivo, por lo que cada partícula se guía sobre todo por su propia mejor posición y el enjambre explora. Al final domina el componente social y las partículas se concentran alrededor del mejor global. Como punto de comparación se usó una implementación con los coeficientes fijos de Clerc y Kennedy ($w = 0.7298$, $c_1 = c_2 = 1.49618$). Ambas implementaciones usan las mismas semillas que las variantes anteriores. Los resultados se presentan en la Sección~\ref{sec:resultados_dinamicos}.
+
+
+% ---------------------------------------------------------------------
+% 6) CONCLUSIONES: reemplaza TODO el texto actual (el de aminoácidos)
+% ---------------------------------------------------------------------
+\section{Conclusiones}
+
+En esta práctica se implementó PSO en su versión clásica y se extendió con distintos esquemas de coeficientes dinámicos. Todas las configuraciones se evaluaron sobre la función F5 (Rastrigin) del CEC 2017 en 10, 20 y 30 dimensiones, con 30 ejecuciones por configuración y las mismas semillas, lo que permitió compararlas de forma pareada.
+
+Cuando solo se modificó el peso de inercia, la estrategia lineal decreciente ($0.9 \rightarrow 0.4$) obtuvo el menor error medio en las tres dimensiones. Con $w$ constante el error forma una U con el mínimo cerca de $w = 0.7298$: los valores bajos provocan convergencia prematura y los altos impiden converger. La estrategia basada en fitness tuvo el peor desempeño, aun después de eliminar el desplazamiento de la función.
+
+Hacer variables también $c_1$ y $c_2$ (TVAC) dio los mejores resultados de toda la práctica. Frente a los coeficientes fijos, redujo el error medio aproximadamente a la mitad y también redujo su desviación estándar en las tres dimensiones, con diferencias significativas en todos los casos ($p < 0.001$). Las curvas de convergencia explican esta diferencia. Con coeficientes fijos el enjambre se estanca antes de la iteración 200, mientras que con coeficientes dinámicos avanza más lento al inicio pero sigue mejorando hasta pasadas las 350 iteraciones. Frente a la estrategia de $w$ lineal con $c_1 = c_2 = 1.5$, la mejora fue significativa en $D = 10$ y $D = 20$ pero no en $D = 30$. Como ambas reducen $w$ de la misma forma, esta ganancia se atribuye a dar más peso al componente cognitivo al inicio y al social al final.
+
+En todas las configuraciones el error creció con la dimensión y ninguna ejecución alcanzó el óptimo global, lo que refleja la dificultad de Rastrigin por su gran cantidad de óptimos locales. El mejor resultado fue un error de 3.98 en $D = 10$, obtenido con coeficientes dinámicos.
+
+
+% ---------------------------------------------------------------------
+% 7) BIBLIOGRAFÍA: agrega estas dos entradas a tu archivo .bib
+%    (las usa \cite en Resultados_Dinamicos.tex)
+% ---------------------------------------------------------------------
+% @article{clerc2002,
+%   author  = {Clerc, Maurice and Kennedy, James},
+%   title   = {The particle swarm - explosion, stability, and convergence in a multidimensional complex space},
+%   journal = {IEEE Transactions on Evolutionary Computation},
+%   year    = {2002},
+%   volume  = {6},
+%   number  = {1},
+%   pages   = {58--73},
+%   doi     = {10.1109/4235.985692}
+% }
+%
+% @article{ratnaweera2004,
+%   author  = {Ratnaweera, Asanga and Halgamuge, Saman K. and Watson, Harry C.},
+%   title   = {Self-organizing hierarchical particle swarm optimizer with time-varying acceleration coefficients},
+%   journal = {IEEE Transactions on Evolutionary Computation},
+%   year    = {2004},
+%   volume  = {8},
+%   number  = {3},
+%   pages   = {240--255},
+%   doi     = {10.1109/TEVC.2004.826071}
+% }
+%
+% También corrige en la entrada de Kennedy y Eberhart: "Kennedy'" -> "Kennedy"

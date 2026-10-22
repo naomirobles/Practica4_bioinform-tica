@@ -1,0 +1,9 @@
+\section{Conclusiones}
+ 
+En esta práctica se implementó PSO en su versión clásica y se extendió con distintos esquemas de coeficientes dinámicos. Todas las configuraciones se evaluaron sobre la función F5 (Rastrigin) del CEC 2017 en 10, 20 y 30 dimensiones, con 30 ejecuciones por configuración y las mismas semillas, lo que permitió compararlas de forma pareada.
+ 
+Cuando solo se modificó el peso de inercia, la estrategia lineal decreciente ($0.9 \rightarrow 0.4$) obtuvo el menor error medio en las tres dimensiones. Con $w$ constante el error forma una U con el mínimo cerca de $w = 0.7298$: los valores bajos provocan convergencia prematura y los altos impiden converger. La estrategia basada en fitness tuvo el peor desempeño, aun después de eliminar el desplazamiento de la función.
+ 
+Hacer variables también $c_1$ y $c_2$ (TVAC) dio los mejores resultados de toda la práctica. Frente a los coeficientes fijos, redujo el error medio aproximadamente a la mitad y también redujo su desviación estándar en las tres dimensiones, con diferencias significativas en todos los casos ($p < 0.001$). Las curvas de convergencia explican esta diferencia. Con coeficientes fijos el enjambre se estanca antes de la iteración 200, mientras que con coeficientes dinámicos avanza más lento al inicio pero sigue mejorando hasta pasadas las 350 iteraciones. Frente a la estrategia de $w$ lineal con $c_1 = c_2 = 1.5$, la mejora fue significativa en $D = 10$ y $D = 20$ pero no en $D = 30$. Como ambas reducen $w$ de la misma forma, esta ganancia se atribuye a dar más peso al componente cognitivo al inicio y al social al final.
+ 
+En todas las configuraciones el error creció con la dimensión y ninguna ejecución alcanzó el óptimo global, lo que refleja la dificultad de Rastrigin por su gran cantidad de óptimos locales. El mejor resultado fue un error de 3.98 en $D = 10$, obtenido con coeficientes dinámicos.

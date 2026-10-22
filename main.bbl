@@ -1,0 +1,194 @@
+\providecommand{\latin}[1]{#1}
+\makeatletter
+\providecommand{\doi}
+  {\begingroup\let\do\@makeother\dospecials
+  \catcode`\{=1 \catcode`\}=2 \doi@aux}
+\providecommand{\doi@aux}[1]{\endgroup\texttt{#1}}
+\makeatother
+\providecommand*\mcitethebibliography{\thebibliography}
+\csname @ifundefined\endcsname{endmcitethebibliography}
+  {\let\endmcitethebibliography\endthebibliography}{}
+\begin{mcitethebibliography}{20}
+\providecommand*\natexlab[1]{#1}
+\providecommand*\mciteSetBstSublistMode[1]{}
+\providecommand*\mciteSetBstMaxWidthForm[2]{}
+\providecommand*\mciteBstWouldAddEndPuncttrue
+  {\def\EndOfBibitem{\unskip.}}
+\providecommand*\mciteBstWouldAddEndPunctfalse
+  {\let\EndOfBibitem\relax}
+\providecommand*\mciteSetBstMidEndSepPunct[3]{}
+\providecommand*\mciteSetBstSublistLabelBeginEnd[3]{}
+\providecommand*\EndOfBibitem{}
+\mciteSetBstSublistMode{f}
+\mciteSetBstMaxWidthForm{subitem}{(\alph{mcitesubitemcount})}
+\mciteSetBstSublistLabelBeginEnd
+  {\mcitemaxwidthsubitemform\space}
+  {\relax}
+  {\relax}
+
+\bibitem[Pereira(2011)]{pereira_particle_2011}
+Pereira,~G. Particle {Swarm} {Optimization}. \textbf{2011}, \relax
+\mciteBstWouldAddEndPunctfalse
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Collet and Rennard(2007)Collet, and Rennard]{collet_stochastic_2007}
+Collet,~P.; Rennard,~J.-P. Stochastic {Optimization} {Algorithms}. 2007;
+  \url{http://arxiv.org/abs/0704.3780}, arXiv:0704.3780 [cs.NE]\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Kennedy' and Eberhart(1995)Kennedy', and
+  Eberhart]{kennedy_particle_nodate}
+Kennedy',~J.; Eberhart,~R. Particle {Swarm} {Optimization}. \textbf{1995},
+  \relax
+\mciteBstWouldAddEndPunctfalse
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Patel and Marwala(2011)Patel, and Marwala]{patel_fuzzy_2011}
+Patel,~P.; Marwala,~T. Fuzzy {Inference} {Systems} {Optimization}. 2011;
+  \url{http://arxiv.org/abs/1110.3385}, arXiv:1110.3385 [cs.AI]\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Freitas \latin{et~al.}(2020)Freitas, Lopes, and
+  Morgado-Dias]{freitas_particle_2020}
+Freitas,~D.; Lopes,~L.~G.; Morgado-Dias,~F. Particle {Swarm} {Optimisation}:
+  {A} {Historical} {Review} {Up} to the {Current} {Developments}.
+  \emph{Entropy} \textbf{2020}, \emph{22}, 362\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Nasr \latin{et~al.}(2020)Nasr, Farouk, Mohamedeen, Elrafie, Bedeir,
+  and Khaled]{nasr_benchmarking_2020}
+Nasr,~M.; Farouk,~O.; Mohamedeen,~A.; Elrafie,~A.; Bedeir,~M.; Khaled,~A.
+  Benchmarking {Meta}-heuristic {Optimization}. \emph{International Journal of
+  Advanced Networking and Applications} \textbf{2020}, \emph{11},
+  arXiv:2007.13476 [cs.NE]\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Poli \latin{et~al.}(2007)Poli, Kennedy, and
+  Blackwell]{poli2007overview}
+Poli,~R.; Kennedy,~J.; Blackwell,~T. Particle swarm optimization: An overview.
+  \emph{Swarm Intelligence} \textbf{2007}, \emph{1}, 33--57\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Shi and Eberhart(1998)Shi, and Eberhart]{shi1998parameter}
+Shi,~Y.; Eberhart,~R.~C. Parameter selection in particle swarm optimization.
+  Evolutionary Programming VII. Berlin, Heidelberg, 1998; pp 591--600\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Shi and Eberhart(1999)Shi, and Eberhart]{shi1999empirical}
+Shi,~Y.; Eberhart,~R.~C. Empirical study of particle swarm optimization.
+  Proceedings of the 1999 Congress on Evolutionary Computation (CEC99).
+  Washington, DC, USA, 1999; pp 1945--1950\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Shi and Eberhart(1998)Shi, and Eberhart]{shi1998modified}
+Shi,~Y.; Eberhart,~R. A modified particle swarm optimizer. Proceedings of the
+  1998 IEEE International Conference on Evolutionary Computation. Anchorage,
+  AK, USA, 1998; pp 69--73\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Kennedy and Eberhart(1995)Kennedy, and Eberhart]{kennedy1995pso}
+Kennedy,~J.; Eberhart,~R. Particle swarm optimization. Proceedings of ICNN'95 -
+  International Conference on Neural Networks. Perth, WA, Australia, 1995; pp
+  1942--1948\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Clerc and Kennedy(2002)Clerc, and Kennedy]{clerc2002particle}
+Clerc,~M.; Kennedy,~J. The particle swarm - explosion, stability, and
+  convergence in a multidimensional complex space. \emph{IEEE Transactions on
+  Evolutionary Computation} \textbf{2002}, \emph{6}, 58--73\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Eberhart and Shi(2000)Eberhart, and Shi]{eberhart2000comparing}
+Eberhart,~R.~C.; Shi,~Y. Comparing inertia weights and constriction factors in
+  particle swarm optimization. Proceedings of the 2000 Congress on Evolutionary
+  Computation. La Jolla, CA, USA, 2000; pp 84--88\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[{\v{C}}repin{\v{s}}ek \latin{et~al.}(2013){\v{C}}repin{\v{s}}ek, Liu,
+  and Mernik]{crepinsek2013exploration}
+{\v{C}}repin{\v{s}}ek,~M.; Liu,~S.-H.; Mernik,~M. Exploration and exploitation
+  in evolutionary algorithms: A survey. \emph{ACM Computing Surveys}
+  \textbf{2013}, \emph{45}, 35:1--35:33\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Zhan \latin{et~al.}(2009)Zhan, Zhang, Li, and Chung]{zhan2009adaptive}
+Zhan,~Z.-H.; Zhang,~J.; Li,~Y.; Chung,~H. S.-H. Adaptive particle swarm
+  optimization. \emph{IEEE Transactions on Systems, Man, and Cybernetics, Part
+  B (Cybernetics)} \textbf{2009}, \emph{39}, 1362--1381\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Ratnaweera \latin{et~al.}(2004)Ratnaweera, Halgamuge, and
+  Watson]{ratnaweera2004self}
+Ratnaweera,~A.; Halgamuge,~S.~K.; Watson,~H.~C. Self-organizing hierarchical
+  particle swarm optimizer with time-varying acceleration coefficients.
+  \emph{IEEE Transactions on Evolutionary Computation} \textbf{2004}, \emph{8},
+  240--255\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Bansal \latin{et~al.}(2011)Bansal, Singh, Saraswat, Verma, Jadon, and
+  Abraham]{bansal2011inertia}
+Bansal,~J.~C.; Singh,~P.~K.; Saraswat,~M.; Verma,~A.; Jadon,~S.~S.; Abraham,~A.
+  Inertia weight strategies in particle swarm optimization. 2011 Third World
+  Congress on Nature and Biologically Inspired Computing (NaBIC). Salamanca,
+  Spain, 2011; pp 633--640\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Chatterjee and Siarry(2006)Chatterjee, and
+  Siarry]{chatterjee2006nonlinear}
+Chatterjee,~A.; Siarry,~P. Nonlinear inertia weight variation for dynamic
+  adaptation in particle swarm optimization. \emph{Computers \& Operations
+  Research} \textbf{2006}, \emph{33}, 859--871\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Eberhart and Shi(2001)Eberhart, and Shi]{eberhart2001tracking}
+Eberhart,~R.~C.; Shi,~Y. Tracking and optimizing dynamic systems with particle
+  swarms. Proceedings of the 2001 Congress on Evolutionary Computation. Seoul,
+  South Korea, 2001; pp 94--100\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\bibitem[Nickabadi \latin{et~al.}(2011)Nickabadi, Ebadzadeh, and
+  Safabakhsh]{nickabadi2011novel}
+Nickabadi,~A.; Ebadzadeh,~M.~M.; Safabakhsh,~R. A novel particle swarm
+  optimization algorithm with adaptive inertia weight. \emph{Applied Soft
+  Computing} \textbf{2011}, \emph{11}, 3658--3670\relax
+\mciteBstWouldAddEndPuncttrue
+\mciteSetBstMidEndSepPunct{\mcitedefaultmidpunct}
+{\mcitedefaultendpunct}{\mcitedefaultseppunct}\relax
+\EndOfBibitem
+\end{mcitethebibliography}

@@ -1,0 +1,120 @@
+\section{Marco Teórico}
+
+\subsection{Optimización con restricciones}
+\label{sec:opt_restricciones}
+
+Un problema de optimización con restricciones busca el vector $\mathbf{x} = (x_1, \dots, x_n)$ que hace mínima una función objetivo $f(\mathbf{x})$ sin violar un conjunto de condiciones:
+\begin{equation}
+\begin{aligned}
+\min_{\mathbf{x}} \quad & f(\mathbf{x}) \\
+\text{sujeto a} \quad & g_j(\mathbf{x}) \le 0, \qquad j = 1, \dots, m, \\
+& l_k \le x_k \le u_k, \qquad k = 1, \dots, n.
+\end{aligned}
+\label{eq:problema_general}
+\end{equation}
+Las funciones $g_j$ son las restricciones de desigualdad y los valores $l_k$, $u_k$ son las cotas de cada variable. Al conjunto de puntos que cumplen todas las restricciones se le llama \textit{región factible}. Una solución que rompe al menos una restricción es \textit{infactible}, y no se puede reportar como respuesta aunque su valor de $f$ sea muy bajo.
+
+Cuando $f$ y las $g_j$ son convexas, cualquier mínimo local es también el mínimo global, y los métodos basados en gradiente llegan a él desde cualquier punto de partida. Si alguna de estas funciones no es convexa, la región factible puede tener varias zonas separadas o la función objetivo puede tener varios ``valles''. En ese caso un método local termina en el mínimo más cercano al punto inicial, que puede ser peor que el global~\cite{floudas1999handbook}. Esta es la situación de los dos problemas de esta práctica, y es el motivo por el que se prueba una metaheurística poblacional, que explora varias regiones al mismo tiempo.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Programación geométrica}
+\label{sec:gp}
+
+La programación geométrica es una clase de problemas de optimización cuyas funciones tienen una forma particular~\cite{duffin1967geometric, boyd2007tutorial}. Un \textit{monomio} es una función de la forma
+\begin{equation}
+m(\mathbf{x}) = c\, x_1^{a_1} x_2^{a_2} \cdots x_n^{a_n}, \qquad c > 0,\ x_k > 0,
+\end{equation}
+donde los exponentes $a_k$ pueden ser cualquier número real, incluso negativos o fraccionarios. Una suma de monomios con coeficientes positivos se llama \textit{posinomio}. Un problema de programación geométrica minimiza un posinomio sujeto a restricciones del tipo ``posinomio $\le 1$''. Este tipo de expresiones aparece con frecuencia en ingeniería, porque muchas leyes físicas y de costos son productos de potencias de las variables de diseño.
+
+La ventaja de esta forma es que, con el cambio de variable $x_k = e^{y_k}$, cada monomio se convierte en la exponencial de una función lineal de $\mathbf{y}$ y el problema completo se vuelve convexo. Así puede resolverse de manera exacta y eficiente~\cite{boyd2007tutorial}.
+
+Cuando algún coeficiente $c$ es negativo, la suma ya no es un posinomio sino un \textit{signomio}, y el problema se llama de \textit{programación geométrica generalizada} o \textit{signomial}. El cambio de variable logarítmico ya no garantiza convexidad, porque un término negativo resta una función convexa, y el problema puede tener varios mínimos locales~\cite{floudas1999handbook}. Para estos problemas la literatura propone métodos de optimización global, como ramificación y acotamiento, que garantizan el óptimo pero tienen un costo que crece rápido con el número de variables. Las metaheurísticas no dan esa garantía, pero no necesitan derivadas ni una forma especial de las funciones, y por eso son una alternativa práctica.
+
+Un requisito de la programación geométrica que se conserva en la versión generalizada es que todas las variables deben ser estrictamente positivas, porque aparecen elevadas a exponentes negativos o fraccionarios. Por eso los dos problemas de esta práctica tienen cotas inferiores mayores que cero.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Optimización por Enjambre de Partículas}
+\label{sec:pso}
+
+PSO fue propuesto por Kennedy y Eberhart en 1995 a partir de la simulación de un modelo social simplificado, inspirado en el movimiento de bandadas de aves y bancos de peces~\cite{kennedy1995pso, collet_stochastic_2007}. La población se llama enjambre y cada individuo, partícula. Cada partícula $i$ tiene una posición $X_i$, que representa una solución candidata, y una velocidad $V_i$. Además guarda la mejor posición que ha visitado, $P_i$ (o \textit{pbest}), y conoce la mejor posición encontrada por todo el enjambre, $G$ (o \textit{gbest}). En cada iteración la velocidad y la posición se actualizan con~\cite{shi1998modified, nasr_benchmarking_2020}:
+\begin{align}
+V_{id}(t+1) &= w\,V_{id}(t) + c_1 r_1 \left(P_{id} - X_{id}(t)\right) + c_2 r_2 \left(G_d - X_{id}(t)\right), \label{eq:velocidad}\\
+X_{id}(t+1) &= X_{id}(t) + V_{id}(t+1), \label{eq:posicion}
+\end{align}
+donde $d$ es la dimensión, $r_1$ y $r_2$ son números aleatorios uniformes en $[0,1]$, $w$ es el peso de inercia y $c_1$, $c_2$ son los coeficientes de aceleración cognitivo y social.
+
+Cada término de la Ecuación~\eqref{eq:velocidad} tiene un papel distinto. El término de inercia $w V_i$ conserva la dirección en la que se movía la partícula; un $w$ grande le permite recorrer distancias largas y explorar, y un $w$ pequeño la frena y concentra la búsqueda~\cite{shi1998parameter}. El término cognitivo atrae a cada partícula hacia su propio $P_i$, y como cada partícula tiene un $P_i$ distinto, mantiene la variedad del enjambre. El término social atrae a todas hacia el mismo punto $G$, lo que acelera la convergencia pero reduce la variedad~\cite{ratnaweera2004self}.
+
+A este balance se le conoce como el dilema entre exploración y explotación~\cite{crepinsek2013exploration}. Explorar significa visitar regiones nuevas del espacio de búsqueda; explotar significa refinar la búsqueda cerca de las mejores soluciones conocidas. Si el enjambre explota demasiado pronto converge a un mínimo local (convergencia prematura); si explora demasiado tiempo, no llega a refinar ninguna solución.
+
+\subsubsection{Coeficientes fijos}
+
+Clerc y Kennedy~\cite{clerc2002particle} estudiaron la estabilidad de la trayectoria de una partícula y propusieron un factor de constricción
+\begin{equation}
+    \chi = \frac{2}{\left|\, 2 - \varphi - \sqrt{\varphi^2 - 4\varphi} \,\right|}, \qquad \varphi = c_1 + c_2 > 4.
+    \label{eq:constriccion}
+\end{equation}
+Con $\varphi = 4.1$ se obtiene $\chi \approx 0.7298$, lo que equivale a usar $w = 0.7298$ y $c_1 = c_2 = 0.7298 \cdot 2.05 \approx 1.49618$. Estos valores garantizan que las partículas no se alejen sin control y se han vuelto una configuración de referencia en la literatura~\cite{eberhart2000comparing, poli2007overview}.
+
+\subsubsection{Coeficientes variables en el tiempo}
+\label{sec:tvac}
+
+Al inicio de la búsqueda conviene explorar, porque el enjambre no sabe dónde está el óptimo; al final conviene explotar, porque ya encontró una región prometedora~\cite{shi1999empirical}. Unos coeficientes fijos representan un mismo compromiso durante toda la ejecución. Shi y Eberhart propusieron reducir $w$ linealmente de 0.9 a 0.4~\cite{shi1999empirical}, y Ratnaweera et al.~\cite{ratnaweera2004self} extendieron la idea a los coeficientes de aceleración (esquema TVAC):
+\begin{align}
+w(t)   &= w_{i} + (w_{f}-w_{i})\,\frac{t}{T-1}, \label{eq:tvac_w}\\
+c_1(t) &= c_{1i} + (c_{1f}-c_{1i})\,\frac{t}{T-1}, \label{eq:tvac_c1}\\
+c_2(t) &= c_{2i} + (c_{2f}-c_{2i})\,\frac{t}{T-1}, \label{eq:tvac_c2}
+\end{align}
+con $w: 0.9 \to 0.4$, $c_1: 2.5 \to 0.5$ y $c_2: 0.5 \to 2.5$, donde $t = 0, \dots, T-1$ es la iteración y $T$ el total de iteraciones. Al inicio domina el componente cognitivo y cada partícula explora por su cuenta; al final domina el social y el enjambre se concentra alrededor de $G$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Manejo de restricciones en metaheurísticas}
+\label{sec:penalizacion}
+
+PSO, igual que la mayoría de las metaheurísticas, fue diseñado para problemas sin restricciones: compara soluciones solo por su valor de aptitud. Para resolver un problema como el de la Ecuación~\eqref{eq:problema_general} hay que decidir cómo comparar una solución factible con una infactible. Coello~\cite{coello2002theoretical} revisa las principales familias de técnicas:
+
+\begin{itemize}
+    \item \textit{Pena de muerte}: se descartan las soluciones infactibles. Es la opción más simple, pero cuando la región factible es pequeña casi todas las partículas iniciales se descartan y el algoritmo no tiene información para avanzar.
+    \item \textit{Funciones de penalización}: se suma a la función objetivo un término proporcional a qué tanto se violan las restricciones. Si el coeficiente de penalización es constante se habla de penalización estática; si cambia con las iteraciones, de penalización dinámica o adaptativa.
+    \item \textit{Reglas de factibilidad}: se compara primero por factibilidad y después por el valor de $f$, sin mezclar ambas cantidades en un solo número.
+    \item \textit{Reparación}: se transforma la solución infactible en una factible antes de evaluarla, lo que requiere conocer bien la estructura del problema.
+\end{itemize}
+
+La penalización estática tiene la forma
+\begin{equation}
+F(\mathbf{x}) = f(\mathbf{x}) + R \sum_{j=1}^{m} \max\left(0,\, g_j(\mathbf{x})\right),
+\label{eq:penalizacion}
+\end{equation}
+donde $R > 0$ es el coeficiente de penalización. Si $\mathbf{x}$ es factible el término de penalización vale cero y $F = f$. Su principal dificultad es elegir $R$: si es muy pequeño, el algoritmo puede preferir una solución infactible con un objetivo bajo; si es muy grande, la superficie de búsqueda cerca de la frontera factible se vuelve muy abrupta~\cite{coello2002theoretical}. En problemas como los de esta práctica, donde el óptimo está justo sobre la frontera (algunas restricciones se cumplen con igualdad), esta elección es importante.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Diversidad del enjambre}
+\label{sec:diversidad}
+
+La diversidad mide qué tan dispersas están las partículas, y permite observar de forma numérica el paso de la exploración a la explotación~\cite{olorunda2008measuring}. Una medida común es la distancia promedio de cada vector al centroide del enjambre:
+\begin{equation}
+D(\mathbf{v}_1, \dots, \mathbf{v}_N) = \frac{1}{N} \sum_{i=1}^{N} \left\lVert \mathbf{v}_i - \bar{\mathbf{v}} \right\rVert, \qquad \bar{\mathbf{v}} = \frac{1}{N}\sum_{i=1}^{N} \mathbf{v}_i,
+\label{eq:diversidad}
+\end{equation}
+donde $N$ es el número de partículas. Esta misma fórmula se aplica a tres conjuntos de vectores distintos:
+\begin{itemize}
+    \item \textit{Diversidad de posición}, sobre las posiciones actuales $X_i$. Indica qué tan repartido está el enjambre en el espacio de búsqueda.
+    \item \textit{Diversidad de velocidad}, sobre las velocidades $V_i$. Indica si las partículas todavía se mueven en direcciones y magnitudes diferentes; cuando tiende a cero, el enjambre ya no se desplaza.
+    \item \textit{Diversidad cognitiva}, sobre las mejores posiciones personales $P_i$. Indica qué tan distintos son los ``recuerdos'' de las partículas. Como $P_i$ solo cambia cuando la partícula encuentra algo mejor, esta medida cambia más despacio que la de posición.
+\end{itemize}
+Una caída rápida de la diversidad indica que el enjambre se concentró pronto en una región, lo que puede ser señal de convergencia prematura. Una diversidad que no baja indica que el enjambre sigue explorando y no ha refinado la solución.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Prueba de rangos con signo de Wilcoxon}
+\label{sec:wilcoxon}
+
+PSO es estocástico, así que una sola ejecución no basta para decir que una versión es mejor que otra. Lo habitual es ejecutar cada versión varias veces y comparar las muestras con una prueba estadística~\cite{derrac2011practical}. Cuando las dos muestras están \textit{pareadas}, es decir, cuando la ejecución $k$ de una versión se puede emparejar con la ejecución $k$ de la otra (por ejemplo, porque comparten la misma población inicial), se usa la prueba de rangos con signo de Wilcoxon~\cite{wilcoxon1945individual}.
+
+La prueba no supone que los datos sigan una distribución normal, algo que en resultados de metaheurísticas rara vez se cumple~\cite{derrac2011practical}. El procedimiento es el siguiente:
+\begin{enumerate}
+    \item Se calcula la diferencia $d_k = a_k - b_k$ para cada pareja y se descartan las diferencias iguales a cero.
+    \item Se ordenan los valores absolutos $|d_k|$ de menor a mayor y se les asigna un rango ($1, 2, \dots, n$).
+    \item Se suman por separado los rangos de las diferencias positivas ($W^+$) y de las negativas ($W^-$).
+    \item El estadístico es $T = \min(W^+, W^-)$.
+\end{enumerate}
+La suma de todos los rangos es $n(n+1)/2$, que para $n = 30$ vale 465. Si no hay diferencia entre las versiones, se espera que $W^+$ y $W^-$ sean parecidas y que $T$ se acerque a 232.5. Mientras más pequeño sea $T$, más se inclinan las diferencias hacia un lado. La hipótesis nula $H_0$ es que la mediana de las diferencias es cero, y se rechaza cuando el valor $p$ es menor que el nivel de significancia $\alpha$, que en esta práctica es 0.05.
